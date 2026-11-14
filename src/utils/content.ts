@@ -3,14 +3,14 @@
  */
 import { categoryMap, siteConfig } from '@/config/site';
 
-/** 项目 repoKey → 统一配置里的 GitHub 仓库地址（未配置时返回空串，不编造） */
+/** 项目 repoKey → 统一配置里的 GitHub Releases 下载页（未配置时返回空串，不编造） */
 export function resolveRepoUrl(repoKey: string | undefined): string {
   if (!repoKey) return '';
   const repoMap: Record<string, string> = {
     terrariaWorldParser: siteConfig.github.terrariaWorldParserRepo,
   };
   const repo = repoMap[repoKey];
-  return repo ? `https://github.com/${repo}` : '';
+  return repo ? `https://github.com/${repo}/releases` : '';
 }
 
 /** 格式化日期为「YYYY 年 M 月 D 日」 */

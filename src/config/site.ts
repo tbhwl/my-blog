@@ -35,7 +35,7 @@ export const siteConfig = {
   description:
     '「这很泰不好丸啦」是一个以复古像素风为视觉特色的综合性个人博客：展示个人项目与作品，记录学习过程、技术笔记和生活随笔，让访客像探索一个像素世界一样认识我。',
   /** ⚠️ 待补充：部署后替换为真实域名（请与 astro.config.mjs 的 site 保持一致） */
-  url: 'https://your-domain.pages.dev',
+  url: 'https://my-blog-3th.pages.dev',
   /** 建站年份 */
   since: 2026,
 
@@ -54,7 +54,7 @@ export const siteConfig = {
     /** ⚠️ 待补充：GitHub 用户名 */
     username: '',
     /** ⚠️ 待补充：泰拉瑞亚世界存档解析器仓库，格式 "用户名/仓库名" */
-    terrariaWorldParserRepo: '',
+    terrariaWorldParserRepo: 'tbhwl/terraria-world-parser',
   },
 
   /**

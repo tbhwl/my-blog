@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // ⚠️ 待补充：部署到 Cloudflare Pages 后，替换为你自己的域名。
 // 此地址会出现在 sitemap.xml、RSS、canonical 和 og:url 中。
-const SITE_URL = 'https://your-domain.pages.dev';
+const SITE_URL = 'https://my-blog-3th.pages.dev';
 
 export default defineConfig({
   site: SITE_URL,

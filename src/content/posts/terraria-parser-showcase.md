@@ -25,7 +25,7 @@ tags:
 
 ## 更多细节
 
-技术实现、使用说明和源码，等我整理公开 GitHub 仓库后会在这里补充。到时候计划把「如何从存档到地图」拆成小步骤写成系列笔记，大概会是这样：
+程序可在此处下载：<a href="https://github.com/tbhwl/terraria-world-parser/releases" target="_blank" rel="noopener noreferrer">下载程序</a>。到时候计划把「如何从存档到地图」拆成小步骤写成系列笔记，大概会是这样：
 
 ```text
 世界存档文件 (.wld)
@@ -40,4 +40,4 @@ tags:
   一张可以探索的地图
 ```
 
-（待补充：GitHub 仓库地址、项目截图）
+（待补充：项目截图）

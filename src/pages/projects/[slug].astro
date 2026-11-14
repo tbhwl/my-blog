@@ -57,7 +57,7 @@ const statusMeta = {
               <dd>
                 {
                   repoUrl ? (
-                    <a href={repoUrl} target="_blank" rel="noopener noreferrer">仓库链接</a>
+                    <a href={repoUrl} target="_blank" rel="noopener noreferrer">下载程序</a>
                   ) : (
                     <span class="is-pending">待补充</span>
                   )
@@ -164,10 +164,10 @@ const statusMeta = {
               repoUrl ? (
                 <div class="gh-actions">
                   <a class="px-btn" href={repoUrl} target="_blank" rel="noopener noreferrer">
-                    <PixelIcon name="github" size={16} /> 查看 GitHub 仓库
+                    <PixelIcon name="github" size={16} /> 下载程序
                   </a>
                   <a class="px-btn px-btn--ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">
-                    查看源代码
+                    下载程序
                   </a>
                 </div>
               ) : (

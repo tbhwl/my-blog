@@ -4,9 +4,8 @@
  * 未配置的信息（如 GitHub 用户名）自动隐藏，不编造。
  */
 import PixelIcon from './PixelIcon.astro';
-import { categories, githubProfileUrl, navItems, siteConfig } from '@/config/site';
+import { categories, navItems, siteConfig } from '@/config/site';
 
-const githubUrl = githubProfileUrl();
 const year = new Date().getFullYear();
 ---
 
@@ -56,15 +55,13 @@ const year = new Date().getFullYear();
       <section class="footer__col">
         <h2 class="footer__title font-pixel">连接</h2>
         <ul class="footer__links">
-          {
-            githubUrl && (
-              <li>
-                <a href={githubUrl} rel="me"><PixelIcon name="github" size={16} /> GitHub</a>
-              </li>
-            )
-          }
           <li>
             <a href="/rss.xml"><PixelIcon name="rss" size={16} /> RSS</a>
+          </li>
+          <li>
+            <a href="https://github.com/tbhwl" target="_blank" rel="noopener noreferrer">
+              <PixelIcon name="github" size={16} /> GitHub
+            </a>
           </li>
           {
             siteConfig.author.email && (
