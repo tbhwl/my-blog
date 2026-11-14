@@ -1,0 +1,60 @@
+---
+/**
+ * 全站基础布局：HTML 骨架、SEO 元信息、主题初始化、导航与页脚。
+ */
+import { ClientRouter } from 'astro:transitions';
+import '@/styles/global.css';
+import Hotbar from '@/components/Hotbar.astro';
+import Footer from '@/components/Footer.astro';
+import { siteConfig } from '@/config/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  ogImage = '/images/og-default.png',
+  noindex = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} | ${siteConfig.name}` : `${siteConfig.name} — ${siteConfig.tagline}`;
+const canonical = new URL(Astro.url.pathname, siteConfig.url);
+const ogImageUrl = new URL(ogImage, siteConfig.url);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={siteConfig.name} href="/rss.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#8fd3ff" />
+    <link rel="stylesheet" href="/fonts/fusion-pixel/index.css" />
+    <script is:inline src="/scripts/theme.js"></script>
+  </head>
+  <body>
+    <ClientRouter />
+    <Hotbar />
+    <slot />
+    <Footer />
+  </body>
+</html>

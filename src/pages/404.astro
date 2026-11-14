@@ -1,0 +1,118 @@
+---
+/**
+ * 404 页面：「这块地方还没被挖到。」
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+---
+
+<BaseLayout title="这块地方还没被挖到" description="404：这块地方还没被挖到。" noindex={true}>
+  <main id="main" class="notfound">
+    <div class="notfound__inner">
+      <div class="notfound__scene" aria-hidden="true">
+        <span class="notfound__pick"><PixelIcon name="pick" size={72} /></span>
+        <span class="notfound__q1"><PixelIcon name="question" size={40} /></span>
+        <span class="notfound__q2"><PixelIcon name="question" size={32} /></span>
+        <span class="notfound__gem"><PixelIcon name="gem" size={28} /></span>
+      </div>
+      <p class="notfound__code font-pixel">404</p>
+      <h1 class="notfound__title px-heading">这块地方还没被挖到。</h1>
+      <p class="notfound__desc">
+        你走得太快了，矿镐还没跟上——这个页面不存在，或者已经被移走了。
+      </p>
+      <div class="notfound__actions">
+        <a class="px-btn" href="/"><PixelIcon name="home" size={16} /> 返回出生点</a>
+        <a class="px-btn px-btn--green" href="/projects/">查看作品</a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .notfound {
+    padding: 64px 16px 96px;
+  }
+  .notfound__inner {
+    max-width: 640px;
+    margin-inline: auto;
+    text-align: center;
+    position: relative;
+  }
+  .notfound__scene {
+    position: relative;
+    height: 140px;
+    margin-bottom: 8px;
+  }
+  .notfound__pick {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%) rotate(45deg);
+    color: var(--text-main);
+    filter: drop-shadow(6px 6px 0 var(--shadow));
+    animation: pick-swing 3.2s steps(4) infinite;
+    transform-origin: 50% 70%;
+  }
+  @keyframes pick-swing {
+    0%, 100% {
+      transform: translateX(-50%) rotate(30deg);
+    }
+    50% {
+      transform: translateX(-50%) rotate(60deg);
+    }
+  }
+  .notfound__q1 {
+    position: absolute;
+    left: 12%;
+    bottom: 24px;
+    color: var(--accent-3);
+    filter: drop-shadow(3px 3px 0 var(--shadow));
+  }
+  .notfound__q2 {
+    position: absolute;
+    right: 14%;
+    bottom: 8px;
+    color: var(--accent-2);
+    filter: drop-shadow(3px 3px 0 var(--shadow));
+  }
+  .notfound__gem {
+    position: absolute;
+    right: 26%;
+    top: 24px;
+    color: var(--accent);
+    filter: drop-shadow(3px 3px 0 var(--shadow));
+  }
+  .notfound__code {
+    margin: 0;
+    font-size: 64px;
+    color: var(--accent);
+    text-shadow: 4px 4px 0 var(--shadow);
+    line-height: 1.2;
+  }
+  .notfound__title {
+    margin: 8px 0 0;
+    font-size: 30px;
+    line-height: 1.4;
+  }
+  .notfound__desc {
+    margin: 14px 0 0;
+    color: var(--text-soft);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+  .notfound__actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 767px) {
+    .notfound {
+      padding-top: 40px;
+    }
+    .notfound__title {
+      font-size: 24px;
+    }
+  }
+</style>

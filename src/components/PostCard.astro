@@ -1,0 +1,135 @@
+---
+/**
+ * 冒险日志卡片（文章列表项）
+ */
+import type { CollectionEntry } from 'astro:content';
+import PixelIcon from './PixelIcon.astro';
+import CategoryChip from './CategoryChip.astro';
+import { formatDate, toISODate } from '@/utils/content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, tags } = post.data;
+const href = `/posts/${post.id}/`;
+---
+
+<article class="px-card px-bevel post-card">
+  <header>
+    <div class="post-card__meta">
+      <CategoryChip category={post.data.category} withName={false} />
+      <time datetime={toISODate(pubDate)} class="post-card__date">
+        <PixelIcon name="calendar" size={16} /> {formatDate(pubDate)}
+      </time>
+    </div>
+    <h3 class="post-card__title font-pixel">
+      <a href={href}>{title}</a>
+    </h3>
+  </header>
+  <p class="post-card__excerpt">{description}</p>
+  <footer class="post-card__footer">
+    {
+      tags.length > 0 && (
+        <ul class="post-card__tags">
+          {
+            tags.slice(0, 4).map((t) => (
+              <li>
+                <a class="px-chip" href={`/tags/${encodeURIComponent(t)}/`}>
+                  <PixelIcon name="tag" size={14} /> {t}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      )
+    }
+    <a class="post-card__more" href={href}>
+      继续阅读 <PixelIcon name="arrow" size={16} />
+    </a>
+  </footer>
+</article>
+
+<style>
+  .post-card {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+  }
+  .post-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .post-card__date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-faint);
+    font-size: 13px;
+    font-family: var(--font-code);
+  }
+  .post-card__title {
+    margin: 10px 0 0;
+    font-size: 21px;
+    line-height: 1.5;
+  }
+  .post-card__title a {
+    color: var(--text-main);
+    text-decoration: none;
+  }
+  .post-card__title a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .post-card__excerpt {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 14.5px;
+    line-height: 1.8;
+    flex: 1;
+  }
+  .post-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .post-card__tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .post-card__tags .px-chip {
+    font-size: 12px;
+    padding: 2px 8px;
+    text-decoration: none;
+  }
+  .post-card__tags .px-chip:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+  .post-card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-pixel-name);
+    -webkit-font-smoothing: none;
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .post-card__more:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+</style>

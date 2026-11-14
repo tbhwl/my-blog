@@ -1,0 +1,25 @@
+# 依赖与构建产物
+node_modules/
+dist/
+.astro/
+.npm-cache/
+
+# 环境变量（不要提交任何密钥）
+.env
+.env.production
+.env.local
+
+# 编辑器与系统文件
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# 日志
+npm-debug.log*
+pnpm-debug.log*
+*.log
+
+# Pagefind 本地索引缓存
+public/pagefind/

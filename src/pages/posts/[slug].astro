@@ -1,0 +1,396 @@
+---
+/**
+ * 文章详情页 /posts/[slug]
+ * 包含：标题、日期、阅读时长、分类、标签、正文、代码高亮+复制、
+ * 图片放大、目录导航、阅读进度条、上一篇/下一篇、相关文章。
+ */
+import { getCollection, render } from 'astro:content';
+import '@/styles/markdown.css';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import CategoryChip from '@/components/CategoryChip.astro';
+import GiscusComments from '@/components/GiscusComments.astro';
+import { formatDate, normalizeCategoryKey, readingTimeMinutes, toISODate } from '@/utils/content';
+import { siteConfig } from '@/config/site';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('posts'))
+    .filter((p) => !p.data.draft)
+    .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, posts },
+  }));
+}
+
+const { post, posts } = Astro.props;
+const { Content, headings } = await render(post);
+const { title, description, pubDate, updatedDate, tags, category } = post.data;
+
+const minutes = readingTimeMinutes(post.body ?? '');
+const categoryKey = normalizeCategoryKey(category);
+
+// 上一篇 / 下一篇（按时间排序）
+const index = posts.findIndex((p) => p.id === post.id);
+const prevPost = index > 0 ? posts[index - 1] : undefined;
+const nextPost = index >= 0 && index < posts.length - 1 ? posts[index + 1] : undefined;
+
+// 相关文章：同分类优先，再按共有标签数
+const related = posts
+  .filter((p) => p.id !== post.id)
+  .map((p) => {
+    const sameCat = p.data.category === categoryKey ? 2 : 0;
+    const sameTags = p.data.tags.filter((t) => tags.includes(t)).length;
+    return { post: p, score: sameCat + sameTags };
+  })
+  .filter((r) => r.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 2)
+  .map((r) => r.post);
+
+const githubUsername = siteConfig.github.username;
+const editUrl = githubUsername
+  ? `https://github.com/${githubUsername}/my-blog/edit/main/src/content/posts/${post.id}.md`
+  : '';
+---
+
+<BaseLayout title={title} description={description} ogImage="/images/og-default.png">
+  <main id="main" class="post-page">
+    <div class="reading-progress" aria-hidden="true"><div class="reading-progress__bar" id="reading-bar"></div></div>
+
+    <div class="post-page__inner">
+      <header class="post-header">
+        <p class="crumb font-pixel">
+          <a href="/posts/"><PixelIcon name="arrow" size={14} /> 返回日志列表</a>
+        </p>
+        <div class="post-header__meta">
+          <CategoryChip category={categoryKey} withName={false} />
+          <span class="post-header__item">
+            <PixelIcon name="calendar" size={16} />
+            <time datetime={toISODate(pubDate)}>{formatDate(pubDate)}</time>
+          </span>
+          {
+            updatedDate && (
+              <span class="post-header__item">
+                <PixelIcon name="clock" size={16} /> 更新于 {formatDate(updatedDate)}
+              </span>
+            )
+          }
+          <span class="post-header__item">
+            <PixelIcon name="book" size={16} /> 约 {minutes} 分钟
+          </span>
+        </div>
+        <h1 class="post-header__title px-heading">{title}</h1>
+        <p class="post-header__desc">{description}</p>
+        {
+          tags.length > 0 && (
+            <ul class="post-header__tags">
+              {
+                tags.map((t) => (
+                  <li>
+                    <a class="px-chip" href={`/tags/${encodeURIComponent(t)}/`}>
+                      <PixelIcon name="tag" size={14} /> {t}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          )
+        }
+      </header>
+
+      <div class="post-layout">
+        <article class="post-body">
+          <div class="px-card px-bevel post-body__paper">
+            <div class="prose"><Content /></div>
+            {
+              editUrl && (
+                <p class="post-edit">
+                  <a href={editUrl} target="_blank" rel="noopener noreferrer">
+                    <PixelIcon name="github" size={14} /> 在 GitHub 上编辑本文
+                  </a>
+                </p>
+              )
+            }
+          </div>
+
+          <nav class="post-nav" aria-label="上一篇 / 下一篇">
+            {
+              prevPost ? (
+                <a class="px-card px-bevel post-nav__item" href={`/posts/${prevPost.id}/`}>
+                  <span class="post-nav__label font-pixel"><PixelIcon name="arrow" size={14} /> 上一篇</span>
+                  <span class="post-nav__title">{prevPost.data.title}</span>
+                </a>
+              ) : (
+                <span class="post-nav__spacer"></span>
+              )
+            }
+            {
+              nextPost && (
+                <a class="px-card px-bevel post-nav__item post-nav__item--next" href={`/posts/${nextPost.id}/`}>
+                  <span class="post-nav__label font-pixel">下一篇 <PixelIcon name="arrow" size={14} /></span>
+                  <span class="post-nav__title">{nextPost.data.title}</span>
+                </a>
+              )
+            }
+          </nav>
+
+          <GiscusComments />
+        </article>
+
+        <aside class="post-aside">
+          {
+            headings.length > 1 && (
+              <div class="px-card px-bevel post-toc-wrap">
+                <h2 class="post-toc-title font-pixel"><PixelIcon name="layers" size={16} /> 目录</h2>
+                <nav class="toc" id="post-toc" aria-label="本文目录"></nav>
+              </div>
+            )
+          }
+          {
+            related.length > 0 && (
+              <div class="px-card px-bevel post-related">
+                <h2 class="post-toc-title font-pixel"><PixelIcon name="link" size={16} /> 相关文章</h2>
+                <ul>
+                  {
+                    related.map((r) => (
+                      <li>
+                        <a href={`/posts/${r.id}/`}>{r.data.title}</a>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
+            )
+          }
+        </aside>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  import { initCodeCopy, initImageViewer, initReadingProgress, initToc } from '@/scripts/post-enhance';
+
+  const bar = document.getElementById('reading-bar');
+  if (bar) initReadingProgress(bar);
+
+  const content = document.querySelector('.prose');
+  const toc = document.getElementById('post-toc');
+  if (content && toc) initToc(content, toc);
+
+  initCodeCopy();
+  initImageViewer();
+</script>
+
+<style>
+  .post-page {
+    padding: 28px 16px 72px;
+  }
+  .post-page__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .post-header {
+    max-width: 780px;
+    margin: 0 auto 28px;
+  }
+  .crumb {
+    margin: 0 0 18px;
+    font-size: 14px;
+  }
+  .crumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    text-decoration: none;
+  }
+  .crumb a svg {
+    transform: rotate(180deg);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  .post-header__meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .post-header__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-faint);
+    font-size: 13px;
+    font-family: var(--font-code);
+  }
+  .post-header__title {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 40px);
+    line-height: 1.4;
+  }
+  .post-header__desc {
+    margin: 12px 0 0;
+    color: var(--text-soft);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .post-header__tags {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .post-header__tags .px-chip {
+    text-decoration: none;
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+  .post-header__tags .px-chip:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+
+  .post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 32px;
+    align-items: start;
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .post-body {
+    min-width: 0;
+  }
+  .post-body__paper {
+    padding: 36px;
+    background: var(--bg-surface);
+  }
+  @media (min-width: 768px) {
+    .post-body__paper {
+      padding: 44px 52px;
+    }
+  }
+  .post-edit {
+    margin: 32px 0 0;
+    padding-top: 16px;
+    border-top: 3px dashed var(--line-soft);
+    font-size: 13px;
+  }
+  .post-edit a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-faint);
+    text-decoration: none;
+  }
+  .post-edit a:hover {
+    color: var(--accent);
+  }
+
+  .post-nav {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .post-nav__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    text-decoration: none;
+    color: var(--text-main);
+  }
+  .post-nav__item--next {
+    text-align: right;
+  }
+  .post-nav__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .post-nav__item--next .post-nav__label {
+    justify-content: flex-end;
+  }
+  .post-nav__item--next .post-nav__label svg {
+    transform: rotate(0deg);
+  }
+  .post-nav__label svg {
+    transform: rotate(180deg);
+  }
+  .post-nav__title {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .post-nav__item:hover .post-nav__title {
+    color: var(--accent);
+  }
+  .post-nav__spacer {
+    display: block;
+  }
+
+  .post-aside {
+    position: sticky;
+    top: 84px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .post-toc-wrap,
+  .post-related {
+    padding: 16px;
+  }
+  .post-toc-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 15px;
+  }
+  .post-related ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .post-related a {
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 13.5px;
+    line-height: 1.6;
+    display: block;
+    border-left: 3px solid var(--line-soft);
+    padding-left: 10px;
+  }
+  .post-related a:hover {
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+
+  @media (max-width: 900px) {
+    .post-layout {
+      grid-template-columns: 1fr;
+    }
+    .post-aside {
+      position: static;
+    }
+  }
+  @media (max-width: 767px) {
+    .post-body__paper {
+      padding: 20px;
+    }
+    .post-nav {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

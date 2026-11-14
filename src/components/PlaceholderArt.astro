@@ -1,0 +1,26 @@
+---
+/**
+ * 待补充占位区域：缺图片时显示的美观占位（不生成虚假截图）
+ */
+import PixelIcon from './PixelIcon.astro';
+
+interface Props {
+  icon?: string;
+  label: string;
+  tall?: boolean;
+}
+
+const { icon = 'map', label, tall = false } = Astro.props;
+---
+
+<div class:list={['placeholder-box', { 'placeholder-box--tall': tall }]}>
+  <PixelIcon name={icon} size={24} />
+  <span>{label}</span>
+</div>
+
+<style>
+  .placeholder-box--tall {
+    min-height: 220px;
+    flex-direction: column;
+  }
+</style>

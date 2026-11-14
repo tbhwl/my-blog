@@ -1,0 +1,235 @@
+---
+/**
+ * 搜索页 /search：世界探索工具
+ * 使用 Pagefind 静态全文搜索（构建后自动生成索引）。
+ * 索引不存在（如开发模式）时给出明确提示，不影响其他页面。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+---
+
+<BaseLayout title="搜索" description="站内全文搜索：世界探索工具。">
+  <main id="main" class="page">
+    <div class="page__inner">
+      <SectionHeading icon="search" title="搜索" subtitle="世界探索工具 · 站内全文搜索" />
+      <form class="search-box" id="search-form" role="search">
+        <input
+          type="search"
+          id="search-input"
+          placeholder="输入关键词，例如：解析器、Astro、踩坑……"
+          autocomplete="off"
+          aria-label="搜索关键词"
+        />
+        <button class="px-btn" type="submit"><PixelIcon name="search" size={16} /> 搜索</button>
+      </form>
+      <p class="search-meta" id="search-meta" aria-live="polite"></p>
+      <ul class="search-results" id="search-results"></ul>
+      <div class="search-status" id="search-status" role="status">
+        <PixelIcon name="search" size={20} />
+        <p>输入关键词开始搜索。</p>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  interface PagefindResultData {
+    url: string;
+    meta?: { title?: string; image?: string };
+    excerpt?: string;
+    sub_results?: Array<{ title?: string; url?: string; excerpt?: string }>;
+  }
+
+  const form = document.getElementById('search-form') as HTMLFormElement | null;
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const resultsEl = document.getElementById('search-results') as HTMLUListElement | null;
+  const metaEl = document.getElementById('search-meta');
+  const statusEl = document.getElementById('search-status');
+
+  let pagefindPromise: Promise<any> | null = null;
+
+  function loadPagefind() {
+    if (!pagefindPromise) {
+      // pagefind 的 JS 由 postbuild 生成到 dist/，构建期不存在，禁止 Vite 静态解析。
+      // 模块导出命名函数 search()，无需实例化。
+      const pagefindUrl = '/pagefind/pagefind.js';
+      pagefindPromise = import(/* @vite-ignore */ pagefindUrl);
+    }
+    return pagefindPromise;
+  }
+
+  function escapeHtml(text: string): string {
+    return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  }
+
+  async function runSearch(term: string) {
+    if (!resultsEl || !metaEl || !statusEl) return;
+    if (!term.trim()) {
+      resultsEl.innerHTML = '';
+      metaEl.textContent = '';
+      statusEl.innerHTML = '<p>输入关键词开始搜索。</p>';
+      return;
+    }
+    try {
+      const PF = await loadPagefind();
+      const search = (PF as any).search as (term: string) => Promise<{
+        results: Array<{ data: () => Promise<PagefindResultData> }>;
+      }>;
+      const searchResult = await search(term);
+      if (!searchResult || searchResult.results.length === 0) {
+        metaEl.textContent = '';
+        resultsEl.innerHTML = '';
+        statusEl.innerHTML = '<p>没有找到相关内容。换一个关键词试试？</p>';
+        return;
+      }
+      metaEl.textContent = `找到 ${searchResult.results.length} 个结果`;
+      const dataList: PagefindResultData[] = [];
+      for (const item of searchResult.results.slice(0, 12)) {
+        const data = await item.data();
+        dataList.push(data);
+      }
+      resultsEl.innerHTML = dataList
+        .map((d) => {
+          const subs = (d.sub_results ?? [])
+            .slice(0, 4)
+            .map((s) => `<li><a href="${escapeHtml(s.url ?? d.url)}"><span>${s.title ? escapeHtml(s.title) : ''}</span></a></li>`)
+            .join('');
+          return `
+            <li class="px-card px-bevel search-result">
+              <a class="search-result__title font-pixel" href="${escapeHtml(d.url)}">${d.meta?.title ? escapeHtml(d.meta.title) : escapeHtml(d.url)}</a>
+              ${d.excerpt ? `<p class="search-result__excerpt">${d.excerpt}</p>` : ''}
+              ${subs ? `<ul class="search-result__subs">${subs}</ul>` : ''}
+            </li>`;
+        })
+        .join('');
+      statusEl.innerHTML = '';
+    } catch (err) {
+      metaEl.textContent = '';
+      resultsEl.innerHTML = '';
+      statusEl.innerHTML =
+        '<p><strong>搜索索引不可用。</strong></p><p>开发模式下请先运行 <code>npm run build</code> 生成索引后再预览（<code>npm run preview</code>）。</p>';
+    }
+  }
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(input?.value ?? '');
+  });
+
+  // 输入防抖
+  let timer: number | undefined;
+  input?.addEventListener('input', () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => runSearch(input.value), 300);
+  });
+</script>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+  .search-box {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .search-box input {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--text-main);
+    background: var(--bg-surface);
+    border: 3px solid var(--line);
+    box-shadow: 4px 4px 0 0 var(--shadow);
+    padding: 11px 14px;
+    outline-offset: 2px;
+  }
+  .search-box input::placeholder {
+    color: var(--text-faint);
+  }
+  .search-meta {
+    margin: 0 0 16px;
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+  .search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .search-result {
+    padding: 18px;
+  }
+  .search-result__title {
+    font-size: 18px;
+    color: var(--text-main);
+    text-decoration: none;
+    display: inline-block;
+  }
+  .search-result__title:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .search-result__excerpt {
+    margin: 8px 0 0;
+    color: var(--text-soft);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .search-result__excerpt mark {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+    padding: 0 2px;
+  }
+  .search-result__subs {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0 0 0 12px;
+    border-left: 3px solid var(--line-soft);
+  }
+  .search-result__subs a {
+    color: var(--text-soft);
+    font-size: 13px;
+    text-decoration: none;
+    display: block;
+    padding: 2px 0;
+  }
+  .search-result__subs a:hover {
+    color: var(--accent);
+  }
+  .search-status {
+    margin-top: 24px;
+    color: var(--text-faint);
+    text-align: center;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .search-status code {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    padding: 1px 6px;
+    font-family: var(--font-code);
+    font-size: 0.9em;
+  }
+  @media (max-width: 767px) {
+    .page {
+      padding-top: 32px;
+    }
+    .search-box {
+      flex-direction: column;
+    }
+  }
+</style>

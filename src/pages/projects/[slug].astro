@@ -1,0 +1,471 @@
+---
+/**
+ * 项目详情页 /projects/[slug]
+ * 目前最重要的页面：泰拉瑞亚世界存档解析器展示页。
+ * 只展示真实功能；缺失的信息显示「待补充」占位，不编造。
+ */
+import { getCollection, render } from 'astro:content';
+import '@/styles/markdown.css';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import PlaceholderArt from '@/components/PlaceholderArt.astro';
+import { resolveRepoUrl } from '@/utils/content';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { name, tagline, description, status, tech, features, screenshots } = project.data;
+const repoUrl = resolveRepoUrl(project.data.repoKey);
+
+const statusMeta = {
+  completed: { label: '已完成', icon: 'star' },
+  active: { label: '进行中', icon: 'pick' },
+  paused: { label: '暂时搁置', icon: 'clock' },
+}[status];
+---
+
+<BaseLayout title={name} description={description}>
+  <main id="main" class="project-page">
+    <div class="project-page__inner">
+      <p class="crumb font-pixel">
+        <a href="/projects/"><PixelIcon name="arrow" size={14} /> 返回作品列表</a>
+      </p>
+
+      <header class="px-card px-bevel project-hero">
+        <div class="project-hero__text">
+          <span class="px-chip project-hero__status">
+            <PixelIcon name={statusMeta.icon} size={14} /> {statusMeta.label}
+          </span>
+          <h1 class="project-hero__title px-heading">{name}</h1>
+          <p class="project-hero__tagline">「{tagline}」</p>
+        </div>
+        <div class="project-hero__meta">
+          <dl class="meta-card">
+            <div>
+              <dt>项目状态</dt>
+              <dd>{statusMeta.label}</dd>
+            </div>
+            <div>
+              <dt>GitHub 仓库</dt>
+              <dd>
+                {
+                  repoUrl ? (
+                    <a href={repoUrl} target="_blank" rel="noopener noreferrer">仓库链接</a>
+                  ) : (
+                    <span class="is-pending">待补充</span>
+                  )
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>技术栈</dt>
+              <dd>{tech.length > 0 ? tech.join('、') : '待补充'}</dd>
+            </div>
+          </dl>
+        </div>
+      </header>
+
+      <div class="project-layout">
+        <div class="project-main">
+          <!-- 项目介绍 -->
+          <section class="px-card px-bevel project-section" aria-labelledby="s-intro">
+            <h2 id="s-intro" class="project-section__title font-pixel">
+              <PixelIcon name="book" size={20} /> 项目介绍
+            </h2>
+            <div class="prose project-prose"><Content /></div>
+          </section>
+
+          <!-- 已实现功能 -->
+          <section class="px-card px-bevel project-section" aria-labelledby="s-features">
+            <h2 id="s-features" class="project-section__title font-pixel">
+              <PixelIcon name="gem" size={20} /> 已实现功能
+            </h2>
+            {
+              features.length > 0 ? (
+                <ul class="feature-list">
+                  {
+                    features.map((f) => (
+                      <li class="feature-list__item">
+                        <span class="feature-list__num">{String(features.indexOf(f) + 1).padStart(2, '0')}</span>
+                        <span>{f}</span>
+                      </li>
+                    ))
+                  }
+                </ul>
+              ) : (
+                <p class="is-pending">（待补充：功能列表）</p>
+              )
+            }
+          </section>
+
+          <!-- 地图展示区域 -->
+          <section class="px-card px-bevel project-section" aria-labelledby="s-map">
+            <h2 id="s-map" class="project-section__title font-pixel">
+              <PixelIcon name="map" size={20} /> 地图展示
+            </h2>
+            {
+              screenshots.length > 0 ? (
+                <ul class="screenshot-grid">
+                  {
+                    screenshots.map((src, i) => (
+                      <li>
+                        <figure>
+                          <img src={src} alt={`${name} 截图 ${i + 1}`} class="pixel-art" data-zoom />
+                          <figcaption>截图 {i + 1}</figcaption>
+                        </figure>
+                      </li>
+                    ))
+                  }
+                </ul>
+              ) : (
+                <div>
+                  <PlaceholderArt icon="map" label="待补充：真实地图截图" tall={true} />
+                  <p class="map-tip">点击图片可查看大图、放大和缩小（截图补充后自动启用）。</p>
+                </div>
+              )
+            }
+          </section>
+
+          <!-- 项目技术信息 -->
+          <section class="px-card px-bevel project-section" aria-labelledby="s-tech">
+            <h2 id="s-tech" class="project-section__title font-pixel">
+              <PixelIcon name="pick" size={20} /> 项目技术信息
+            </h2>
+            {
+              tech.length > 0 ? (
+                <ul class="tech-list">
+                  {
+                    tech.map((t) => (
+                      <li class="px-chip">{t}</li>
+                    ))
+                  }
+                </ul>
+              ) : (
+                <p class="is-pending">
+                  待补充：项目使用的编程语言与技术信息。在 <code>src/config/site.ts</code> 或项目内容文件中填写后展示。
+                </p>
+              )
+            }
+          </section>
+
+          <!-- GitHub 入口 -->
+          <section class="px-card px-bevel project-section" aria-labelledby="s-github">
+            <h2 id="s-github" class="project-section__title font-pixel">
+              <PixelIcon name="github" size={20} /> GitHub 入口
+            </h2>
+            {
+              repoUrl ? (
+                <div class="gh-actions">
+                  <a class="px-btn" href={repoUrl} target="_blank" rel="noopener noreferrer">
+                    <PixelIcon name="github" size={16} /> 查看 GitHub 仓库
+                  </a>
+                  <a class="px-btn px-btn--ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">
+                    查看源代码
+                  </a>
+                </div>
+              ) : (
+                <p class="is-pending">
+                  待补充：仓库地址配置于 <code>src/config/site.ts</code> 的
+                  <code>github.terrariaWorldParserRepo</code>（所有链接统一配置管理）。
+                </p>
+              )
+            }
+          </section>
+        </div>
+
+        <aside class="project-aside">
+          <div class="px-card px-bevel aside-card">
+            <h2 class="aside-card__title font-pixel">状态说明</h2>
+            <p>
+              本项目状态为「<strong>已完成</strong>」。这里只做展示，不包含下一步开发计划，
+              也不会暗示解析器仍在开发中。
+            </p>
+          </div>
+          <div class="px-card px-bevel aside-card">
+            <h2 class="aside-card__title font-pixel">快速导航</h2>
+            <ul class="aside-nav">
+              <li><a href="#s-intro">项目介绍</a></li>
+              <li><a href="#s-features">已实现功能</a></li>
+              <li><a href="#s-map">地图展示</a></li>
+              <li><a href="#s-tech">技术信息</a></li>
+              <li><a href="#s-github">GitHub 入口</a></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  // 图片查看器：点击放大、放大/缩小、ESC 关闭（无截图时不影响页面）
+  import { initImageViewer } from '@/scripts/post-enhance';
+  initImageViewer();
+</script>
+
+<style>
+  .project-page {
+    padding: 36px 16px 72px;
+  }
+  .project-page__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .crumb {
+    margin: 0 0 20px;
+    font-size: 14px;
+  }
+  .crumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    text-decoration: none;
+  }
+  .crumb a svg {
+    transform: rotate(180deg);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+
+  .project-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 28px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .project-hero__text {
+    flex: 1;
+    min-width: 260px;
+  }
+  .project-hero__status {
+    background: var(--accent-2);
+    color: var(--text-on-accent);
+  }
+  .project-hero__title {
+    margin: 14px 0 6px;
+    font-size: 34px;
+    line-height: 1.3;
+  }
+  .project-hero__tagline {
+    margin: 0;
+    color: var(--accent);
+    font-size: 16px;
+  }
+  .meta-card {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+  }
+  .meta-card div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 12px;
+    background: var(--bg-panel);
+    border: 2px solid var(--line);
+    font-size: 13px;
+  }
+  .meta-card dt {
+    color: var(--text-faint);
+  }
+  .meta-card dd {
+    margin: 0;
+    color: var(--text-main);
+    font-weight: 600;
+  }
+  .meta-card a {
+    color: var(--accent);
+  }
+
+  .project-layout {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 28px;
+    align-items: start;
+  }
+  .project-main {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+  }
+  .project-section {
+    padding: 24px;
+  }
+  .project-section__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    font-size: 22px;
+    color: var(--text-main);
+  }
+  .project-section__title svg {
+    color: var(--accent);
+  }
+  .project-prose {
+    font-size: 15.5px;
+  }
+  .is-pending {
+    color: var(--text-faint);
+    margin: 0;
+    line-height: 1.8;
+  }
+  .is-pending code {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    padding: 1px 6px;
+    font-family: var(--font-code);
+    font-size: 0.9em;
+  }
+
+  .feature-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .feature-list__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-panel);
+    border: 2px solid var(--line);
+    padding: 12px 16px;
+    font-size: 15px;
+    box-shadow: 3px 3px 0 0 var(--shadow);
+  }
+  .feature-list__num {
+    font-family: var(--font-pixel-name);
+    -webkit-font-smoothing: none;
+    font-size: 18px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .screenshot-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .screenshot-grid figure {
+    margin: 0;
+  }
+  .screenshot-grid img {
+    width: 100%;
+    border: 3px solid var(--line);
+    box-shadow: 4px 4px 0 0 var(--shadow);
+    cursor: zoom-in;
+  }
+  .screenshot-grid figcaption {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  .map-tip {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+
+  .tech-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .gh-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .project-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 84px;
+  }
+  .aside-card {
+    padding: 18px;
+  }
+  .aside-card__title {
+    margin: 0 0 10px;
+    font-size: 16px;
+  }
+  .aside-card p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--text-soft);
+    line-height: 1.8;
+  }
+  .aside-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .aside-nav a {
+    display: block;
+    padding: 7px 10px;
+    border-left: 4px solid var(--line-soft);
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .aside-nav a:hover {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-panel);
+  }
+
+  /* 图片查看器样式已移至 global.css（dialog 由脚本追加到 body，需要全局样式） */
+
+  @media (max-width: 900px) {
+    .project-layout {
+      grid-template-columns: 1fr;
+    }
+    .project-aside {
+      position: static;
+    }
+  }
+  @media (max-width: 767px) {
+    .project-hero {
+      padding: 20px;
+    }
+    .project-hero__title {
+      font-size: 26px;
+    }
+    .screenshot-grid {
+      grid-template-columns: 1fr;
+    }
+    .project-section {
+      padding: 18px;
+    }
+  }
+</style>

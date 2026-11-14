@@ -1,0 +1,675 @@
+---
+/**
+ * 首页 = 出生点。
+ * 区域：出生点 Hero → 代表作品（地表）→ 冒险日志（洞穴）→ 冒险者档案 + 世界事件（深层/地狱）。
+ * 页面背景随滚动从天空过渡到熔岩（见 global.css 的 .page-home 渐变）。
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import PostCard from '@/components/PostCard.astro';
+import PixelAvatar from '@/components/PixelAvatar.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import PlaceholderArt from '@/components/PlaceholderArt.astro';
+import { heroSubtitles, siteConfig } from '@/config/site';
+import { formatDate, resolveRepoUrl } from '@/utils/content';
+
+const posts = (await getCollection('posts'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const latestPosts = posts.slice(0, 3);
+
+const projects = (await getCollection('projects')).sort((a, b) => b.data.order - a.data.order);
+const featured = projects.find((p) => p.data.featured) ?? projects[0];
+const featuredRepoUrl = featured ? resolveRepoUrl(featured.data.repoKey) : '';
+
+const events = [...siteConfig.events].reverse();
+const eventIcons: Record<string, string> = {
+  site: 'star',
+  project: 'chest',
+  post: 'book',
+  update: 'pick',
+  learning: 'gem',
+};
+
+const subtitlesJson = JSON.stringify(heroSubtitles);
+---
+
+<BaseLayout>
+  <main id="main" class="page-home">
+    <!-- ============ A. 出生点 Hero ============ -->
+    <section class="hero">
+      <div class="hero__decor" aria-hidden="true">
+        <span class="hero-decor__sky">
+          <span class="hero-sun"><PixelIcon name="sun" size={96} /></span>
+          <span class="hero-moon"><PixelIcon name="moon" size={96} /></span>
+        </span>
+        <span class="hero-cloud hero-cloud--1"></span>
+        <span class="hero-cloud hero-cloud--2"></span>
+        <span class="hero-ore hero-ore--gem"><PixelIcon name="gem" size={32} /></span>
+        <span class="hero-ore hero-ore--fire"><PixelIcon name="fire" size={32} /></span>
+      </div>
+      <div class="hero__inner">
+        <p class="hero__coords font-pixel"><PixelIcon name="home" size={16} /> 世界坐标：出生点</p>
+        <h1 class="hero__title px-heading">这很泰不好丸啦</h1>
+        <p class="hero__tagline font-pixel">—— {siteConfig.tagline} ——</p>
+        <p class="hero__subtitle font-pixel" id="hero-subtitle" data-subtitles={subtitlesJson}>
+          正在生成世界……
+        </p>
+        <div class="hero__actions">
+          <a class="px-btn" href="/projects/">看作品</a>
+          <a class="px-btn px-btn--green" href="/posts/">读日志</a>
+          <a class="px-btn px-btn--ghost" href="/about/">冒险者档案</a>
+        </div>
+      </div>
+      <div class="px-terrain px-terrain--grass" aria-hidden="true"></div>
+    </section>
+
+    <!-- ============ B. 代表作品（地表） ============ -->
+    <section class="zone" aria-labelledby="h-featured">
+      <div class="zone__inner">
+        <SectionHeading
+          id="h-featured"
+          icon="chest"
+          title="代表作品"
+          subtitle="冒险者的作品与装备"
+          href="/projects/"
+          hrefLabel="全部作品"
+        />
+        {
+          featured && (
+            <div class="px-card px-bevel featured">
+              <div class="featured__media">
+                {
+                  featured.data.cover ? (
+                    <img src={featured.data.cover} alt={`${featured.data.name} 封面`} class="pixel-art" />
+                  ) : (
+                    <PlaceholderArt icon="map" label="待补充：真实地图截图" tall={true} />
+                  )
+                }
+              </div>
+              <div class="featured__body">
+                <span class="px-chip featured__status">
+                  <PixelIcon name="star" size={14} /> 已完成
+                </span>
+                <h3 class="featured__title font-pixel">{featured.data.name}</h3>
+                <p class="featured__tagline">{featured.data.tagline}</p>
+                <p class="featured__desc">{featured.data.description}</p>
+                {
+                  featured.data.features.length > 0 && (
+                    <ul class="featured__features">
+                      {
+                        featured.data.features.map((f) => (
+                          <li><PixelIcon name="gem" size={14} /> {f}</li>
+                        ))
+                      }
+                    </ul>
+                  )
+                }
+                <div class="featured__actions">
+                  <a class="px-btn" href={`/projects/${featured.id}/`}>
+                    查看详情 <PixelIcon name="arrow" size={16} />
+                  </a>
+                  {
+                    featuredRepoUrl ? (
+                      <a class="px-btn px-btn--ghost" href={featuredRepoUrl} target="_blank" rel="noopener noreferrer">
+                        <PixelIcon name="github" size={16} /> GitHub 仓库
+                      </a>
+                    ) : (
+                      <span class="px-chip featured__pending">
+                        <PixelIcon name="question" size={14} /> GitHub 仓库待补充
+                      </span>
+                    )
+                  }
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <div class="px-terrain px-terrain--dirt" aria-hidden="true"></div>
+
+    <!-- ============ C. 冒险日志（洞穴） ============ -->
+    <section class="zone" aria-labelledby="h-posts">
+      <div class="zone__inner">
+        <SectionHeading
+          id="h-posts"
+          icon="book"
+          title="冒险日志"
+          subtitle="最近发布的故事、教程与翻车记录"
+          href="/posts/"
+          hrefLabel="全部日志"
+        />
+        {
+          latestPosts.length > 0 ? (
+            <ul class="post-grid">
+              {
+                latestPosts.map((post) => (
+                  <li><PostCard post={post} /></li>
+                ))
+              }
+            </ul>
+          ) : (
+            <PlaceholderArt icon="book" label="还没有日志——第一篇正在路上。" />
+          )
+        }
+      </div>
+    </section>
+
+    <div class="px-terrain px-terrain--cave" aria-hidden="true"></div>
+
+    <!-- ============ D. 冒险者档案 + E. 世界事件日志（深层） ============ -->
+    <section class="zone zone--deep" aria-labelledby="h-about">
+      <div class="zone__inner">
+        <div class="deep-grid">
+          <div>
+            <SectionHeading
+              id="h-about"
+              icon="id"
+              title="冒险者档案"
+              subtitle="关于这位冒险者"
+              href="/about/"
+              hrefLabel="完整档案"
+              light={true}
+            />
+            <div class="px-card px-bevel adventurer">
+              <div class="adventurer__avatar">
+                <PixelAvatar size={112} />
+              </div>
+              <div class="adventurer__info">
+                <p class="adventurer__name font-pixel">{siteConfig.author.name}</p>
+                <p class="adventurer__role">本站作者 · 像素世界主理人</p>
+                <p class="adventurer__bio">
+                  {siteConfig.author.bio || '「待补充」——这位冒险者还没想好怎么介绍自己。'}
+                </p>
+                <ul class="adventurer__stats">
+                  <li class="px-chip"><PixelIcon name="gem" size={14} /> 已挖项目：{projects.length}</li>
+                  <li class="px-chip"><PixelIcon name="book" size={14} /> 日志：{posts.length} 篇</li>
+                  <li class="px-chip"><PixelIcon name="clock" size={14} /> 建站：{siteConfig.since}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div>
+            <SectionHeading
+              icon="map"
+              title="世界事件日志"
+              subtitle="近期发生的真实动态"
+              light={true}
+            />
+            {
+              events.length > 0 ? (
+                <ul class="events">
+                  {
+                    events.map((ev) => (
+                      <li class="px-card px-bevel events__item">
+                        <span class="events__icon">
+                          <PixelIcon name={eventIcons[ev.type] ?? 'star'} size={20} />
+                        </span>
+                        <div>
+                          <time datetime={ev.date} class="events__date">{formatDate(ev.date)}</time>
+                          <p class="events__text">{ev.text}</p>
+                        </div>
+                      </li>
+                    ))
+                  }
+                </ul>
+              ) : (
+                <div class="px-card px-bevel events__empty">
+                  <PixelIcon name="question" size={20} /> 暂无世界事件。
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="px-terrain px-terrain--lava" aria-hidden="true"></div>
+  </main>
+</BaseLayout>
+
+<script>
+  // 随机像素副标题：加载时随机一条，之后定时轮换；点击可手动换一条。
+  const el = document.getElementById('hero-subtitle');
+  if (el) {
+    let list: string[] = [];
+    try {
+      list = JSON.parse(el.dataset.subtitles ?? '[]');
+    } catch {
+      /* 忽略 */
+    }
+    if (list.length === 0) list = ['正在生成世界……'];
+
+    let index = Math.floor(Math.random() * list.length);
+
+    const show = (i: number, animate: boolean) => {
+      el.textContent = list[i % list.length];
+      if (animate) {
+        el.classList.remove('is-flip');
+        void el.offsetWidth;
+        el.classList.add('is-flip');
+      }
+    };
+
+    show(index, false);
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let timer: number | undefined;
+    if (!reduced) {
+      timer = window.setInterval(() => {
+        index = (index + 1) % list.length;
+        show(index, true);
+      }, 6000);
+    }
+
+    el.addEventListener('click', () => {
+      if (timer) window.clearInterval(timer);
+      index = (index + 1) % list.length;
+      show(index, true);
+    });
+  }
+</script>
+
+<style>
+  /* ---- Hero ---- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+  }
+  .hero__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+    padding: 96px 16px 88px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .hero__coords {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-main);
+    background: var(--bg-surface);
+    border: 2px solid var(--line);
+    box-shadow: 3px 3px 0 0 var(--shadow);
+    padding: 6px 14px;
+    margin: 0 0 24px;
+  }
+  .hero__title {
+    font-size: clamp(44px, 9vw, 84px);
+    line-height: 1.25;
+    margin: 0;
+  }
+  .hero__tagline {
+    font-size: clamp(16px, 3vw, 22px);
+    color: var(--text-soft);
+    margin: 16px 0 0;
+  }
+  .hero__subtitle {
+    font-size: 18px;
+    color: var(--accent);
+    margin: 22px auto 0;
+    max-width: 640px;
+    cursor: pointer;
+    min-height: 1.6em;
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+  .hero__subtitle.is-flip {
+    animation: subtitle-flip 0.3s steps(2);
+  }
+  @keyframes subtitle-flip {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .hero__actions {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+
+  /* ---- 装饰 ---- */
+  .hero__decor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hero-sun {
+    position: absolute;
+    top: 48px;
+    right: 9%;
+    color: var(--star);
+    filter: drop-shadow(4px 4px 0 var(--shadow));
+    animation: sun-bob 5s steps(4) infinite;
+  }
+  .hero-moon {
+    position: absolute;
+    top: 48px;
+    right: 9%;
+    color: #e8eeff;
+    filter: drop-shadow(4px 4px 0 var(--shadow));
+    display: none;
+  }
+  [data-theme="night"] .hero-sun {
+    display: none;
+  }
+  [data-theme="night"] .hero-moon {
+    display: block;
+  }
+  @keyframes sun-bob {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(8px);
+    }
+  }
+  .hero-cloud {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--cloud);
+    opacity: 0.9;
+    box-shadow:
+      20px 0 0 0 var(--cloud),
+      40px 0 0 0 var(--cloud),
+      10px -20px 0 0 var(--cloud),
+      30px -20px 0 0 var(--cloud),
+      10px 20px 0 0 var(--cloud),
+      30px 20px 0 0 var(--cloud);
+    animation: cloud-drift 24s linear infinite;
+  }
+  .hero-cloud--1 {
+    top: 140px;
+    left: -80px;
+  }
+  .hero-cloud--2 {
+    top: 220px;
+    left: -40px;
+    animation-delay: -12s;
+    transform: scale(0.7);
+    opacity: 0.7;
+  }
+  @keyframes cloud-drift {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(100vw + 200px));
+    }
+  }
+  .hero-ore {
+    position: absolute;
+    display: inline-flex;
+    animation: ore-bob 3.6s steps(2) infinite;
+    filter: drop-shadow(3px 3px 0 var(--shadow));
+  }
+  .hero-ore--gem {
+    bottom: 120px;
+    left: 7%;
+    color: var(--accent-2);
+  }
+  .hero-ore--fire {
+    bottom: 170px;
+    left: 16%;
+    color: var(--lava);
+    animation-delay: -1.8s;
+  }
+  @keyframes ore-bob {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+
+  /* ---- 区块 ---- */
+  .zone {
+    padding: 56px 16px 64px;
+  }
+  .zone__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .zone--deep {
+    color: #fff4d6;
+  }
+
+  /* ---- 代表作品 ---- */
+  .featured {
+    display: grid;
+    grid-template-columns: 5fr 6fr;
+    overflow: hidden;
+  }
+  .featured__media {
+    border-right: 3px solid var(--line);
+    background: var(--bg-surface-2);
+    min-height: 300px;
+    display: flex;
+  }
+  .featured__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .featured__media .placeholder-box {
+    flex: 1;
+    border: none;
+    min-height: 300px;
+  }
+  .featured__body {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .featured__status {
+    align-self: flex-start;
+    background: var(--accent-2);
+    color: var(--text-on-accent);
+  }
+  .featured__title {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.4;
+  }
+  .featured__tagline {
+    margin: 0;
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .featured__desc {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 15px;
+    line-height: 1.85;
+  }
+  .featured__features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .featured__features li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    font-size: 14px;
+  }
+  .featured__features svg {
+    color: var(--accent-2);
+    flex-shrink: 0;
+  }
+  .featured__actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .featured__pending {
+    border-style: dashed;
+    color: var(--text-faint);
+  }
+
+  /* ---- 冒险日志 ---- */
+  .post-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  /* ---- 档案 + 事件 ---- */
+  .deep-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  .adventurer {
+    display: flex;
+    gap: 20px;
+    padding: 24px;
+    align-items: flex-start;
+  }
+  .adventurer__avatar {
+    background: var(--bg-surface-2);
+    border: 3px solid var(--line);
+    padding: 8px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+  .adventurer__name {
+    margin: 0;
+    font-size: 22px;
+  }
+  .adventurer__role {
+    margin: 4px 0 0;
+    color: var(--accent);
+    font-size: 13px;
+  }
+  .adventurer__bio {
+    margin: 10px 0 0;
+    color: var(--text-soft);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .adventurer__stats {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .adventurer__stats .px-chip {
+    font-size: 12px;
+  }
+
+  .events {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .events__item {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    align-items: flex-start;
+  }
+  .events__icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-3);
+    color: var(--ink-raw);
+    border: 2px solid var(--line);
+  }
+  .events__date {
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .events__text {
+    margin: 4px 0 0;
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .events__empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--text-faint);
+  }
+
+  /* ---- 响应式 ---- */
+  @media (max-width: 900px) {
+    .featured {
+      grid-template-columns: 1fr;
+    }
+    .featured__media {
+      border-right: none;
+      border-bottom: 3px solid var(--line);
+      min-height: 220px;
+    }
+    .featured__media .placeholder-box {
+      min-height: 220px;
+    }
+    .post-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .deep-grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+  @media (max-width: 767px) {
+    .hero__inner {
+      padding: 56px 16px 64px;
+    }
+    .hero__title {
+      font-size: 40px;
+    }
+    .hero-sun,
+    .hero-moon {
+      top: 24px;
+      right: 6%;
+    }
+    .adventurer {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .adventurer__stats {
+      justify-content: center;
+    }
+  }
+</style>

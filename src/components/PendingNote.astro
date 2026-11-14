@@ -1,0 +1,29 @@
+---
+/**
+ * 「待补充」说明条：用于个人资料等未知信息占位
+ */
+import PixelIcon from './PixelIcon.astro';
+
+interface Props {
+  label: string;
+}
+
+const { label } = Astro.props;
+---
+
+<p class="profile-item__pending">
+  <PixelIcon name="question" size={14} /> 待补充：{label}
+</p>
+
+<style>
+  .profile-item__pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-faint);
+    border: 2px dashed var(--line-soft);
+    padding: 8px 12px;
+    font-size: 13.5px;
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,153 @@
+---
+/**
+ * 文章列表页 /posts（分页）
+ */
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import PostCard from '@/components/PostCard.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import PlaceholderArt from '@/components/PlaceholderArt.astro';
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+  const posts = (await getCollection('posts'))
+    .filter((p) => !p.data.draft)
+    .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+  return paginate(posts, { pageSize: 8 });
+};
+
+const { page } = Astro.props as { page: Page<CollectionEntry<'posts'>> };
+---
+
+<BaseLayout
+  title="冒险日志"
+  description="学习过程、技术笔记、生活随笔与踩坑翻车记录——按矿层分类的冒险日志。"
+>
+  <main id="main" class="page">
+    <div class="page__inner">
+      <SectionHeading
+        icon="book"
+        title="冒险日志"
+        subtitle={`共 ${page.total} 篇 · 第 ${page.currentPage} / ${page.lastPage} 页`}
+      />
+      {
+        page.data.length > 0 ? (
+          <ul class="post-list">
+            {
+              page.data.map((post) => (
+                <li><PostCard post={post} /></li>
+              ))
+            }
+          </ul>
+        ) : (
+          <PlaceholderArt icon="book" label="还没有日志——第一篇正在路上。" tall={true} />
+        )
+      }
+      {
+        page.lastPage > 1 && (
+          <nav class="pager" aria-label="分页">
+            {
+              page.url.prev ? (
+                <a class="px-btn px-btn--ghost px-btn--sm" href={page.url.prev}>
+                  <PixelIcon name="arrow" size={14} /> 上一页
+                </a>
+              ) : (
+                <span class="px-btn px-btn--ghost px-btn--sm is-disabled" aria-disabled="true">上一页</span>
+              )
+            }
+            <ul class="pager__pages">
+              {
+                Array.from({ length: page.lastPage }, (_, i) => i + 1).map((n) => (
+                  <li>
+                    <a
+                      href={n === 1 ? '/posts/' : `/posts/${n}/`}
+                      class="pager__num font-pixel"
+                      aria-current={n === page.currentPage ? 'page' : undefined}
+                    >
+                      {n}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+            {
+              page.url.next ? (
+                <a class="px-btn px-btn--ghost px-btn--sm" href={page.url.next}>
+                  下一页 <PixelIcon name="arrow" size={14} />
+                </a>
+              ) : (
+                <span class="px-btn px-btn--ghost px-btn--sm is-disabled" aria-disabled="true">下一页</span>
+              )
+            }
+          </nav>
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 860px;
+    margin-inline: auto;
+  }
+  .post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .pager {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .pager .is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .pager__pages {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+  }
+  .pager__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 6px;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 2px solid var(--line);
+    box-shadow: 2px 2px 0 0 var(--shadow);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .pager__num:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+  .pager__num[aria-current="page"] {
+    background: var(--accent);
+    color: var(--text-on-accent);
+  }
+  @media (max-width: 767px) {
+    .page {
+      padding-top: 32px;
+    }
+  }
+</style>

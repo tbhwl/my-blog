@@ -1,0 +1,68 @@
+---
+/**
+ * 项目列表页 /projects：展示所有个人项目（像素风项目卡片）
+ * 项目数据从独立内容文件（src/content/projects/*.md）读取。
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import PlaceholderArt from '@/components/PlaceholderArt.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => b.data.order - a.data.order);
+---
+
+<BaseLayout
+  title="作品"
+  description="我的个人项目与作品：冒险者的装备栏。目前重点展示已完成的泰拉瑞亚世界存档解析器。"
+>
+  <main id="main" class="page">
+    <div class="page__inner">
+      <SectionHeading
+        icon="chest"
+        title="作品"
+        subtitle="冒险者的作品与装备 · 共 {projects.length} 件"
+      />
+      {
+        projects.length > 0 ? (
+          <ul class="project-grid">
+            {
+              projects.map((project) => (
+                <li><ProjectCard project={project} /></li>
+              ))
+            }
+          </ul>
+        ) : (
+          <PlaceholderArt icon="chest" label="装备栏还是空的——项目正在路上。" tall={true} />
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .project-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+  @media (max-width: 767px) {
+    .project-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .page {
+      padding-top: 32px;
+    }
+  }
+</style>

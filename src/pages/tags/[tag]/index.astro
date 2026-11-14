@@ -1,0 +1,85 @@
+---
+/**
+ * 标签页 /tags/[tag]
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import PostCard from '@/components/PostCard.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+
+export async function getStaticPaths() {
+  const allPosts = (await getCollection('posts')).filter((p) => !p.data.draft);
+  const tagSet = new Set<string>();
+  for (const p of allPosts) for (const t of p.data.tags) tagSet.add(t);
+  return [...tagSet].map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: allPosts
+        .filter((p) => p.data.tags.includes(tag))
+        .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`标签：${tag}`} description={`带有「${tag}」标签的文章。`}>
+  <main id="main" class="page">
+    <div class="page__inner">
+      <p class="crumb font-pixel">
+        <a href="/posts/"><PixelIcon name="arrow" size={14} /> 返回日志列表</a>
+      </p>
+      <SectionHeading icon="tag" title={`标签：${tag}`} subtitle={`共 ${posts.length} 篇`} />
+      <ul class="post-list">
+        {
+          posts.map((post) => (
+            <li><PostCard post={post} /></li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 860px;
+    margin-inline: auto;
+  }
+  .crumb {
+    margin: 0 0 18px;
+    font-size: 14px;
+  }
+  .crumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    text-decoration: none;
+  }
+  .crumb a svg {
+    transform: rotate(180deg);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  .post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  @media (max-width: 767px) {
+    .page {
+      padding-top: 32px;
+    }
+  }
+</style>

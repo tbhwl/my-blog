@@ -1,0 +1,46 @@
+---
+/**
+ * 主导航：像素快捷栏 Hotbar。
+ * 桌面端 = 顶部工具栏；手机端 = 底部快捷栏（移动端优先设计）。
+ */
+import PixelIcon from './PixelIcon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { navItems, siteConfig } from '@/config/site';
+
+const currentPath = Astro.url.pathname.replace(/\/+$/, '/') || '/';
+
+function isActive(href: string, exact: boolean): boolean {
+  const clean = href.replace(/\/+$/, '/') || '/';
+  if (clean === '/') return currentPath === '/';
+  return exact ? currentPath === clean : currentPath.startsWith(clean);
+}
+---
+
+<a class="skip-link" href="#main">跳到正文</a>
+<header class="hotbar">
+  <div class="hotbar__inner">
+    <a href="/" class="hotbar__brand">
+      <PixelIcon name="star" size={24} />
+      <span>{siteConfig.name}</span>
+    </a>
+    <nav aria-label="主导航">
+      <ul class="hotbar__slots">
+        {
+          navItems.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="hotbar__slot"
+                aria-current={isActive(item.href, item.exact) ? 'page' : undefined}
+              >
+                <PixelIcon name={item.icon} size={24} />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))
+        }
+        <li><ThemeToggle /></li>
+      </ul>
+    </nav>
+  </div>
+</header>

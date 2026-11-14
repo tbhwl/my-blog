@@ -1,0 +1,41 @@
+---
+/**
+ * 矿层（分类）徽章：地表 / 洞穴 / 深层 / 地狱
+ */
+import PixelIcon from './PixelIcon.astro';
+import { getCategory } from '@/utils/content';
+
+interface Props {
+  category: string;
+  withName?: boolean;
+}
+
+const { category, withName = true } = Astro.props;
+const def = getCategory(category);
+const icon =
+  def.kind === 'surface' ? 'tree' : def.kind === 'cave' ? 'pick' : def.kind === 'deep' ? 'gem' : 'fire';
+---
+
+<a class="px-chip category-chip" href={`/posts/categories/${def.key}/`}>
+  <PixelIcon name={icon} size={16} />
+  <span>{def.name}</span>
+  {withName && <span class="category-chip__tagline">{def.tagline}</span>}
+</a>
+
+<style>
+  .category-chip {
+    text-decoration: none;
+  }
+  .category-chip:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+  .category-chip__tagline {
+    color: var(--text-faint);
+    font-family: var(--font-body);
+    font-size: 12px;
+  }
+  .category-chip:hover .category-chip__tagline {
+    color: var(--ink-raw);
+  }
+</style>

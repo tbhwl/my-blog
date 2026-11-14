@@ -1,0 +1,160 @@
+---
+/**
+ * 页脚：GitHub / RSS / 联系方式 / 版权信息 / 泰拉瑞亚商标声明。
+ * 未配置的信息（如 GitHub 用户名）自动隐藏，不编造。
+ */
+import PixelIcon from './PixelIcon.astro';
+import { categories, githubProfileUrl, navItems, siteConfig } from '@/config/site';
+
+const githubUrl = githubProfileUrl();
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="px-terrain px-terrain--lava" aria-hidden="true"></div>
+  <div class="footer__inner">
+    <div class="footer__grid">
+      <section class="footer__col">
+        <h2 class="footer__title font-pixel">关于本站</h2>
+        <p class="footer__text">
+          <strong>{siteConfig.name}</strong> — {siteConfig.tagline}
+        </p>
+        <p class="footer__text">
+          以「探索一个属于自己的世界」为设计概念的个人像素世界：展示项目、记录学习与生活。
+        </p>
+      </section>
+      <section class="footer__col">
+        <h2 class="footer__title font-pixel">探索</h2>
+        <ul class="footer__links">
+          {
+            navItems.map((item) => (
+              <li>
+                <a href={item.href}><PixelIcon name={item.icon} size={16} /> {item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+      <section class="footer__col">
+        <h2 class="footer__title font-pixel">矿层</h2>
+        <ul class="footer__links">
+          {
+            categories.map((c) => (
+              <li>
+                <a href={`/posts/categories/${c.key}/`}>
+                  <PixelIcon
+                    name={c.kind === 'surface' ? 'tree' : c.kind === 'cave' ? 'pick' : c.kind === 'deep' ? 'gem' : 'fire'}
+                    size={16}
+                  />
+                  {' '}{c.name} · {c.tagline}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+      <section class="footer__col">
+        <h2 class="footer__title font-pixel">连接</h2>
+        <ul class="footer__links">
+          {
+            githubUrl && (
+              <li>
+                <a href={githubUrl} rel="me"><PixelIcon name="github" size={16} /> GitHub</a>
+              </li>
+            )
+          }
+          <li>
+            <a href="/rss.xml"><PixelIcon name="rss" size={16} /> RSS</a>
+          </li>
+          {
+            siteConfig.author.email && (
+              <li>
+                <a href={`mailto:${siteConfig.author.email}`}><PixelIcon name="mail" size={16} /> 邮箱</a>
+              </li>
+            )
+          }
+        </ul>
+      </section>
+    </div>
+    <div class="footer__legal">
+      <p>
+        © {year} {siteConfig.author.name} · 由 <a href="https://astro.build/">Astro</a> 驱动 ·
+        页面像素字体：<a href="https://github.com/TakWolf/fusion-pixel-font">缝合怪像素字体</a>（SIL OFL 1.1 协议）
+      </p>
+      <p>
+        泰拉瑞亚（Terraria）是 <a href="https://re-logic.com/">Re-Logic</a> 的商标。本站与 Re-Logic
+        无官方关联；本站未使用泰拉瑞亚的游戏美术、字体或 UI 资源，像素风格均由原创 CSS 与 SVG 实现。
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--bg-panel);
+    border-top: 3px solid var(--line);
+  }
+  .footer__inner {
+    max-width: 1080px;
+    margin-inline: auto;
+    padding: 40px 16px 48px;
+  }
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+  }
+  .footer__title {
+    font-size: 16px;
+    color: var(--text-main);
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+  .footer__text {
+    font-size: 14px;
+    color: var(--text-soft);
+    line-height: 1.8;
+    margin-top: 6px;
+  }
+  .footer__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .footer__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .footer__links a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .footer__legal {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 3px dashed var(--line-soft);
+    font-size: 12.5px;
+    color: var(--text-faint);
+    line-height: 1.9;
+  }
+  .footer__legal a {
+    color: var(--text-soft);
+  }
+  @media (max-width: 767px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .footer__inner {
+      padding-top: 28px;
+    }
+  }
+</style>

@@ -1,0 +1,73 @@
+---
+/**
+ * Giscus 评论（独立模块，可整体关闭）
+ * 未配置 repo 时不渲染任何内容；加载失败不影响页面其他部分。
+ */
+import { siteConfig } from '@/config/site';
+
+const { repo, repoId, category, categoryId, mapping } = siteConfig.giscus;
+const enabled = Boolean(repo && repoId && category && categoryId);
+---
+
+{
+  enabled && (
+    <section class="comments" aria-label="评论区">
+      <h2 class="comments__title font-pixel">评论</h2>
+      <p class="comments__note">由 GitHub Discussions 提供，登录 GitHub 后即可留言。</p>
+      <div class="giscus"></div>
+      <script
+        is:inline
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping={mapping}
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="top"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async
+      ></script>
+      <script is:inline>
+        // 跟随站点主题切换 Giscus 主题（白天 light / 夜晚 dark）
+        (function () {
+          var update = function () {
+            var theme = document.documentElement.getAttribute('data-theme');
+            var iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            var target = theme === 'night' ? 'dark' : 'light';
+            iframe.contentWindow &&
+              iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: target } } }, 'https://giscus.app');
+          };
+          document.addEventListener('astro:page-load', update);
+          var observer = new MutationObserver(update);
+          observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        })();
+      </script>
+    </section>
+  )
+}
+
+<style>
+  .comments {
+    margin-top: 32px;
+    padding: 20px;
+    background: var(--bg-surface);
+    border: 3px solid var(--line);
+    box-shadow: 6px 6px 0 0 var(--shadow);
+  }
+  .comments__title {
+    margin: 0;
+    font-size: 20px;
+  }
+  .comments__note {
+    margin: 6px 0 16px;
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+</style>

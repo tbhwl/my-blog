@@ -1,0 +1,610 @@
+@import "tailwindcss";
+
+/* ============================================================
+   主题令牌（白天 / 夜晚）
+   颜色统一以 CSS Variables 定义，组件里只引用语义色。
+   ============================================================ */
+
+:root {
+  /* 原始色板（白天） */
+  --sky: #8fd3ff;
+  --sand: #fff4d6;
+  --ink-raw: #2b1d12;
+  --lava: #ff6a1a;
+  --grass: #5dbb3f;
+  --grass-dark: #3e8e2a;
+  --dirt: #8b5a2b;
+  --star: #ffd84d;
+
+  /* 语义色（白天主题） */
+  --bg-page: #8fd3ff;
+  --bg-surface: #fffdf5;
+  --bg-surface-2: #f2e6c9;
+  --bg-panel: #fff4d6;
+  --bg-code: #fffdf5;
+  --text-main: #2b1d12;
+  --text-soft: #5c4630;
+  --text-faint: #93795c;
+  --text-on-accent: #fffdf5;
+  --line: #2b1d12;
+  --line-soft: #c3ab8a;
+  --shadow: #1b110a;
+  --accent: #ff6a1a;
+  --accent-2: #5dbb3f;
+  --accent-3: #ffd84d;
+  --bevel-light: rgba(255, 255, 255, 0.9);
+  --bevel-dark: rgba(43, 29, 18, 0.22);
+  --backdrop-veil: rgba(255, 244, 214, 0.88);
+
+  /* 字体：缝合怪像素字体（Fusion Pixel Font，SIL OFL 1.1 协议，见 public/fonts/） */
+  --font-pixel-name: "Fusion Pixel 12px Proportional Simplified Chinese",
+    "Fusion Pixel 12px Proportional SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI",
+    system-ui, -apple-system, sans-serif;
+  --font-code: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+[data-theme="night"] {
+  --sky: #0b1026;
+  --sand: #1b2347;
+  --ink-raw: #e8eeff;
+  --lava: #ff6a1a;
+  --grass: #4a9c33;
+  --grass-dark: #357026;
+  --dirt: #6b4a2f;
+  --star: #ffd84d;
+
+  --bg-page: #0b1026;
+  --bg-surface: #151c3a;
+  --bg-surface-2: #101632;
+  --bg-panel: #1b2347;
+  --bg-code: #0e1330;
+  --text-main: #e8eeff;
+  --text-soft: #b7c0e6;
+  --text-faint: #7e88b8;
+  --text-on-accent: #0b1026;
+  --line: #e8eeff;
+  --line-soft: #49548a;
+  --shadow: #04060f;
+  --accent: #ff6a1a;
+  --accent-2: #5dbb3f;
+  --accent-3: #ffd84d;
+  --bevel-light: rgba(232, 238, 255, 0.16);
+  --bevel-dark: rgba(4, 6, 15, 0.45);
+  --backdrop-veil: rgba(11, 16, 38, 0.88);
+}
+
+/* Tailwind v4：把语义色映射成工具类（bg-surface / text-ink / border-line …） */
+@theme inline {
+  --color-surface: var(--bg-surface);
+  --color-surface-2: var(--bg-surface-2);
+  --color-panel: var(--bg-panel);
+  --color-page: var(--bg-page);
+  --color-ink: var(--text-main);
+  --color-soft: var(--text-soft);
+  --color-faint: var(--text-faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --color-shadow: var(--shadow);
+  --font-pixel: var(--font-pixel-name);
+  --font-body: var(--font-body);
+  --font-code: var(--font-code);
+}
+
+/* ============================================================
+   基础
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  line-height: 1.75;
+  overflow-x: hidden;
+  transition: background-color 0.25s steps(3), color 0.25s steps(3);
+}
+
+.font-pixel {
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+:focus-visible {
+  outline: 3px dashed var(--accent-3);
+  outline-offset: 3px;
+}
+
+img.pixel-art {
+  image-rendering: pixelated;
+}
+
+/* 像素风硬阴影卡片 */
+.px-card {
+  background: var(--bg-surface);
+  border: 3px solid var(--line);
+  box-shadow: 6px 6px 0 0 var(--shadow);
+}
+
+/* 立体像素块（内衬高光 + 底部暗边） */
+.px-bevel {
+  position: relative;
+}
+.px-bevel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--bevel-light), inset 0 -3px 0 0 var(--bevel-dark);
+}
+
+/* 按钮 */
+.px-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 10px 18px;
+  color: var(--text-on-accent);
+  background: var(--accent);
+  border: 3px solid var(--line);
+  box-shadow: 4px 4px 0 0 var(--shadow);
+  cursor: pointer;
+  text-decoration: none;
+}
+.px-btn:hover {
+  filter: brightness(1.08);
+}
+.px-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--shadow);
+}
+.px-btn--green {
+  background: var(--accent-2);
+  color: var(--text-on-accent);
+}
+.px-btn--ghost {
+  background: var(--bg-surface);
+  color: var(--text-main);
+}
+.px-btn--ghost:hover {
+  background: var(--accent-3);
+}
+.px-btn--sm {
+  font-size: 14px;
+  padding: 7px 12px;
+  box-shadow: 3px 3px 0 0 var(--shadow);
+}
+.px-btn--sm:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--shadow);
+}
+
+/* 小标签 / 徽章 */
+.px-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 4px 10px;
+  border: 2px solid var(--line);
+  background: var(--bg-panel);
+  color: var(--text-main);
+  box-shadow: 2px 2px 0 0 var(--shadow);
+}
+
+/* 区块标题：像素标题 + 分段线 */
+.px-heading {
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  color: var(--text-main);
+  text-shadow: 3px 3px 0 var(--shadow);
+  letter-spacing: 0.04em;
+}
+.px-heading--light {
+  color: var(--text-on-accent);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+/* 16px 棋盘格纹理叠加层 */
+.px-grid-overlay {
+  background-image: linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* 像素地形分隔条（世界剖面过渡） */
+.px-terrain {
+  height: 20px;
+  border-block: 3px solid var(--line);
+  image-rendering: pixelated;
+}
+.px-terrain--grass {
+  background: repeating-linear-gradient(90deg, var(--grass) 0 20px, var(--grass-dark) 20px 40px);
+}
+.px-terrain--dirt {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--dirt) 0 20px,
+    color-mix(in srgb, var(--dirt) 78%, black) 20px 40px
+  );
+}
+.px-terrain--cave {
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--dirt) 55%, black) 0 20px,
+    color-mix(in srgb, var(--dirt) 70%, black) 20px 40px
+  );
+}
+.px-terrain--lava {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lava) 0 24px,
+    color-mix(in srgb, var(--lava) 70%, #ffd84d) 24px 48px
+  );
+}
+
+/* ============================================================
+   导航：像素快捷栏 Hotbar
+   ============================================================ */
+
+.hotbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--backdrop-veil);
+  backdrop-filter: blur(2px);
+  border-bottom: 3px solid var(--line);
+}
+.hotbar__inner {
+  max-width: 1080px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+}
+.hotbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-size: 18px;
+  color: var(--text-main);
+  text-decoration: none;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+.hotbar__slots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hotbar__slot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-size: 14px;
+  color: var(--text-main);
+  text-decoration: none;
+  border: 2px solid var(--line);
+  background: var(--bg-surface);
+  box-shadow: 2px 2px 0 0 var(--shadow);
+}
+.hotbar__slot:hover {
+  background: var(--accent-3);
+  transform: translateY(-2px);
+}
+.hotbar__slot:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 0 var(--shadow);
+}
+.hotbar__slot[aria-current="page"] {
+  background: var(--accent-3);
+  box-shadow: 0 0 0 3px var(--accent-3), 3px 3px 0 0 var(--shadow);
+}
+
+/* 手机端：顶部只留品牌，导航变成底部快捷栏 */
+@media (max-width: 767px) {
+  .hotbar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: none;
+    border-top: 3px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .hotbar__inner {
+    justify-content: center;
+    padding: 8px 8px;
+  }
+  .hotbar__brand {
+    display: none;
+  }
+  .hotbar__slot {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+    padding: 5px 7px;
+    min-width: 52px;
+    justify-content: center;
+  }
+  body {
+    padding-bottom: 86px;
+  }
+}
+
+/* ============================================================
+   主题切换按钮
+   ============================================================ */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--bg-surface);
+  border: 2px solid var(--line);
+  box-shadow: 2px 2px 0 0 var(--shadow);
+  cursor: pointer;
+  color: var(--text-main);
+}
+.theme-toggle:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 0 var(--shadow);
+}
+.theme-icon {
+  display: none;
+}
+[data-theme="day"] .theme-icon--day {
+  display: block;
+}
+[data-theme="night"] .theme-icon--night {
+  display: block;
+}
+/* 切换时太阳/月亮的小动画（克制的逐帧效果） */
+.theme-toggle.is-switching svg {
+  animation: theme-pop 0.28s steps(3);
+}
+@keyframes theme-pop {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(0.6) rotate(60deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* ============================================================
+   Shiki 代码高亮（白天/夜晚双主题）
+   ============================================================ */
+
+.astro-code {
+  font-family: var(--font-code);
+  font-size: 14px;
+  line-height: 1.7;
+  border: 3px solid var(--line);
+  box-shadow: 4px 4px 0 0 var(--shadow);
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 0;
+}
+[data-theme="night"] .astro-code,
+[data-theme="night"] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* 代码块头部（复制按钮等由脚本注入） */
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-soft);
+  background: var(--bg-panel);
+  border: 3px solid var(--line);
+  border-bottom: none;
+  padding: 6px 12px;
+}
+.code-copy-btn {
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border: 2px solid var(--line);
+  padding: 3px 10px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 0 var(--shadow);
+}
+.code-copy-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.code-copy-btn.is-copied {
+  background: var(--accent-2);
+  color: var(--text-on-accent);
+}
+
+/* ============================================================
+   阅读进度条 / 回到顶部
+   ============================================================ */
+
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 6px;
+  width: 100%;
+  z-index: 60;
+  pointer-events: none;
+}
+.reading-progress__bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-bottom: 2px solid var(--line);
+  transition: width 0.1s steps(2);
+}
+
+/* ============================================================
+   通用小工具
+   ============================================================ */
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  background: var(--accent-3);
+  color: var(--ink-raw);
+  padding: 8px 14px;
+  font-family: var(--font-pixel-name);
+  border: 2px solid var(--line);
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* 待补充占位 */
+.placeholder-box {
+  border: 3px dashed var(--line-soft);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--bg-surface) 0 12px,
+    var(--bg-surface-2) 12px 24px
+  );
+  color: var(--text-faint);
+  font-family: var(--font-pixel-name);
+  -webkit-font-smoothing: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 24px 16px;
+}
+
+/* 动效可访问性：尊重系统减少动态效果设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   图片查看器（dialog，由 post-enhance 脚本创建，样式需全局）
+   ============================================================ */
+
+.img-viewer {
+  border: 3px solid var(--line);
+  background: var(--bg-page);
+  box-shadow: 8px 8px 0 0 var(--shadow);
+  padding: 0;
+  max-width: min(92vw, 1000px);
+  width: 100%;
+}
+.img-viewer::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+.img-viewer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border-bottom: 3px solid var(--line);
+}
+.img-viewer__title {
+  font-size: 14px;
+  color: var(--text-main);
+}
+.img-viewer__controls {
+  display: flex;
+  gap: 8px;
+}
+.img-viewer__stage {
+  overflow: auto;
+  max-height: 76vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 16px;
+  cursor: grab;
+}
+.img-viewer__stage img {
+  max-width: 100%;
+  transform-origin: top left;
+  border: 3px solid var(--line);
+}
+
+/* ============================================================
+   首页：向下滚动时背景从天空 → 地表 → 洞穴 → 深层 → 熔岩
+   ============================================================ */
+
+:root {
+  --zone-sand: #fff4d6;
+  --zone-dirt: #d9b98a;
+  --zone-deep: #6b4a2f;
+  --zone-hell: #4a1c10;
+  --cloud: #ffffff;
+}
+
+[data-theme="night"] {
+  --zone-sand: #232c55;
+  --zone-dirt: #2e3760;
+  --zone-deep: #211e35;
+  --zone-hell: #2a1016;
+  --cloud: #c9d4f2;
+}
+
+body.page-home {
+  background: linear-gradient(
+    180deg,
+    var(--sky) 0%,
+    var(--sky) 18%,
+    var(--zone-sand) 32%,
+    var(--zone-dirt) 48%,
+    var(--zone-deep) 68%,
+    var(--zone-hell) 100%
+  );
+}

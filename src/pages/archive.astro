@@ -1,0 +1,261 @@
+---
+/**
+ * 归档页 /archive：世界纵向剖面（按年份 + 矿层分层的文章归档）
+ * 同时提供普通年份列表，保证实用性。
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import PlaceholderArt from '@/components/PlaceholderArt.astro';
+import { formatDate, getCategory, toISODate } from '@/utils/content';
+
+const posts = (await getCollection('posts'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+const yearMap = new Map<number, typeof posts>();
+for (const p of posts) {
+  const year = p.data.pubDate.getFullYear();
+  const list = yearMap.get(year) ?? [];
+  list.push(p);
+  yearMap.set(year, list);
+}
+const years = [...yearMap.entries()].sort((a, b) => b[0] - a[0]);
+
+const kindIcon = (kind: string) =>
+  kind === 'surface' ? 'tree' : kind === 'cave' ? 'pick' : kind === 'deep' ? 'gem' : 'fire';
+---
+
+<BaseLayout
+  title="归档"
+  description="按年份与矿层（分类）组织的历史文章归档：世界纵向剖面。"
+>
+  <main id="main" class="page">
+    <div class="page__inner">
+      <SectionHeading icon="layers" title="归档" subtitle="世界纵向剖面：沿着时间轴向下挖掘" />
+
+      {
+        years.length > 0 ? (
+          <div class="strata">
+            {
+              years.map(([year, yearPosts]) => {
+                // 矿层分组（按分类定义顺序）
+                const groups = ['surface', 'cave', 'deep', 'hell']
+                  .map((key) => ({
+                    key,
+                    posts: yearPosts.filter((p) => p.data.category === key),
+                  }))
+                  .filter((g) => g.posts.length > 0);
+                return (
+                  <section class="strata__year" id={`year-${year}`}>
+                    <h2 class="strata__year-title font-pixel">
+                      <PixelIcon name="layers" size={20} /> {year} 年
+                      <span class="strata__count">（{yearPosts.length} 篇）</span>
+                    </h2>
+                    <div class="strata__layers">
+                      {
+                        groups.map((g) => {
+                          const def = getCategory(g.key);
+                          return (
+                            <div class={`strata__layer strata__layer--${def.kind}`}>
+                              <div class="strata__layer-head">
+                                <span class="strata__layer-name font-pixel">
+                                  <PixelIcon name={kindIcon(def.kind)} size={16} /> {def.name}矿层
+                                </span>
+                                <span class="strata__layer-tag">{def.tagline}</span>
+                              </div>
+                              <ul class="strata__list">
+                                {
+                                  g.posts.map((p) => (
+                                    <li>
+                                      <a href={`/posts/${p.id}/`}>
+                                        <span class="strata__date">{formatDate(p.data.pubDate)}</span>
+                                        <span class="strata__post-title">{p.data.title}</span>
+                                      </a>
+                                    </li>
+                                  ))
+                                }
+                              </ul>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  </section>
+                );
+              })
+            }
+          </div>
+        ) : (
+          <PlaceholderArt icon="layers" label="还没有可归档的内容。" tall={true} />
+        )
+      }
+
+      <h2 class="flat-title font-pixel">普通年份列表</h2>
+      <ul class="flat-list">
+        {
+          posts.map((p) => (
+            <li>
+              <a href={`/posts/${p.id}/`}>
+                <time datetime={toISODate(p.data.pubDate)}>{formatDate(p.data.pubDate)}</time>
+                <span>{p.data.title}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 860px;
+    margin-inline: auto;
+  }
+  .strata {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+  .strata__year-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+    font-size: 24px;
+    color: var(--text-main);
+  }
+  .strata__year-title svg {
+    color: var(--accent);
+  }
+  .strata__count {
+    font-size: 14px;
+    color: var(--text-faint);
+  }
+  .strata__layers {
+    display: flex;
+    flex-direction: column;
+  }
+  .strata__layer {
+    border: 3px solid var(--line);
+    border-bottom: none;
+    padding: 14px 18px;
+    background: var(--bg-surface);
+  }
+  .strata__layer:last-child {
+    border-bottom: 3px solid var(--line);
+  }
+  .strata__layer--surface {
+    background: color-mix(in srgb, var(--zone-sand) 55%, var(--bg-surface));
+  }
+  .strata__layer--cave {
+    background: color-mix(in srgb, var(--zone-dirt) 38%, var(--bg-surface));
+  }
+  .strata__layer--deep {
+    background: color-mix(in srgb, var(--zone-deep) 34%, var(--bg-surface));
+  }
+  .strata__layer--hell {
+    background: color-mix(in srgb, var(--zone-hell) 22%, var(--bg-surface));
+  }
+  .strata__layer-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .strata__layer-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    color: var(--text-main);
+  }
+  .strata__layer-name svg {
+    color: var(--accent-2);
+  }
+  .strata__layer-tag {
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  .strata__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .strata__list a {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    text-decoration: none;
+    color: var(--text-soft);
+    padding: 4px 8px;
+  }
+  .strata__list a:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+  .strata__date {
+    font-family: var(--font-code);
+    font-size: 12.5px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  .strata__list a:hover .strata__date {
+    color: var(--ink-raw);
+  }
+  .strata__post-title {
+    font-size: 15px;
+  }
+  .flat-title {
+    margin: 48px 0 14px;
+    font-size: 22px;
+  }
+  .flat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 3px solid var(--line);
+    background: var(--bg-surface);
+    box-shadow: 6px 6px 0 0 var(--shadow);
+  }
+  .flat-list li + li {
+    border-top: 2px dashed var(--line-soft);
+  }
+  .flat-list a {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 15px;
+  }
+  .flat-list a:hover {
+    background: var(--accent-3);
+    color: var(--ink-raw);
+  }
+  .flat-list time {
+    font-family: var(--font-code);
+    font-size: 13px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  @media (max-width: 767px) {
+    .page {
+      padding-top: 32px;
+    }
+    .strata__list a {
+      flex-direction: column;
+      gap: 2px;
+    }
+  }
+</style>

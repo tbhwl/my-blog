@@ -1,0 +1,233 @@
+---
+/**
+ * 关于我 /about：冒险者档案（像素游戏角色资料面板风格）
+ * 不虚构任何个人信息；未知内容使用「待补充」占位。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PixelAvatar from '@/components/PixelAvatar.astro';
+import PixelIcon from '@/components/PixelIcon.astro';
+import PendingNote from '@/components/PendingNote.astro';
+import SectionHeading from '@/components/SectionHeading.astro';
+import { githubProfileUrl, siteConfig } from '@/config/site';
+import { getCollection } from 'astro:content';
+import { resolveRepoUrl } from '@/utils/content';
+
+const githubUrl = githubProfileUrl();
+const projects = await getCollection('projects');
+const parser = projects.find((p) => p.id === 'terraria-world-parser');
+const parserUrl = parser ? `/projects/${parser.id}/` : '/projects/';
+const parserRepo = parser ? resolveRepoUrl(parser.data.repoKey) : '';
+---
+
+<BaseLayout title="关于我" description="冒险者档案：这位冒险者是谁、在学习什么、做过什么。">
+  <main id="main" class="page">
+    <div class="page__inner">
+      <SectionHeading icon="id" title="冒险者档案" subtitle="像素世界里的角色资料面板" />
+
+      <!-- 角色面板 -->
+      <div class="px-card px-bevel profile-panel">
+        <div class="profile-panel__avatar">
+          <PixelAvatar size={160} />
+          <span class="profile-panel__frame font-pixel">PLAYER</span>
+        </div>
+        <div class="profile-panel__info">
+          <h1 class="profile-panel__name px-heading">{siteConfig.author.name}</h1>
+          <p class="profile-panel__role font-pixel">本站作者 · 像素世界主理人</p>
+          <p class="profile-panel__bio">
+            {siteConfig.author.bio || '「待补充」——这位冒险者还没想好怎么介绍自己。'}
+          </p>
+          <ul class="profile-panel__stats">
+            <li class="px-chip">Lv.?? · 待补充</li>
+            <li class="px-chip"><PixelIcon name="clock" size={14} /> 建站 {siteConfig.since}</li>
+            <li class="px-chip"><PixelIcon name="gem" size={14} /> 待补充：技能</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 资料明细 -->
+      <div class="profile-grid">
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-who">
+          <h2 id="p-who" class="profile-item__title font-pixel"><PixelIcon name="id" size={18} /> 我是谁</h2>
+          {siteConfig.author.bio ? <p>{siteConfig.author.bio}</p> : <PendingNote label="自我介绍" />}
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-learn">
+          <h2 id="p-learn" class="profile-item__title font-pixel"><PixelIcon name="book" size={18} /> 我正在学习</h2>
+          {<PendingNote label="学习方向" />}
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-like">
+          <h2 id="p-like" class="profile-item__title font-pixel"><PixelIcon name="star" size={18} /> 我喜欢</h2>
+          {<PendingNote label="兴趣爱好" />}
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-done">
+          <h2 id="p-done" class="profile-item__title font-pixel"><PixelIcon name="chest" size={18} /> 我做过</h2>
+          {
+            parser ? (
+              <div class="profile-item__done">
+                <p>
+                  <strong>{parser.data.name}</strong> — {parser.data.tagline}
+                </p>
+                <div class="profile-item__actions">
+                  <a class="px-btn px-btn--sm" href={parserUrl}>查看详情 <PixelIcon name="arrow" size={14} /></a>
+                  {
+                    parserRepo && (
+                      <a class="px-btn px-btn--ghost px-btn--sm" href={parserRepo} target="_blank" rel="noopener noreferrer">
+                        <PixelIcon name="github" size={14} /> 仓库
+                      </a>
+                    )
+                  }
+                </div>
+              </div>
+            ) : (
+              <PendingNote label="项目作品" />
+            )
+          }
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-gh">
+          <h2 id="p-gh" class="profile-item__title font-pixel"><PixelIcon name="github" size={18} /> 我的 GitHub</h2>
+          {
+            githubUrl ? (
+              <a class="px-btn px-btn--ghost px-btn--sm" href={githubUrl} target="_blank" rel="me noopener noreferrer">
+                <PixelIcon name="github" size={14} /> github.com/{siteConfig.github.username}
+              </a>
+            ) : (
+              <PendingNote label="GitHub 用户名（配置于 src/config/site.ts）" />
+            )
+          }
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-focus">
+          <h2 id="p-focus" class="profile-item__title font-pixel"><PixelIcon name="clock" size={18} /> 最近在关注</h2>
+          {<PendingNote label="近期关注的事情" />}
+        </section>
+
+        <section class="px-card px-bevel profile-item" aria-labelledby="p-contact">
+          <h2 id="p-contact" class="profile-item__title font-pixel"><PixelIcon name="mail" size={18} /> 联系方式</h2>
+          {
+            siteConfig.author.email ? (
+              <a class="px-btn px-btn--ghost px-btn--sm" href={`mailto:${siteConfig.author.email}`}>
+                <PixelIcon name="mail" size={14} /> {siteConfig.author.email}
+              </a>
+            ) : (
+              <PendingNote label="邮箱（配置于 src/config/site.ts）" />
+            )
+          }
+        </section>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 48px 16px 72px;
+  }
+  .page__inner {
+    max-width: 980px;
+    margin-inline: auto;
+  }
+  .profile-panel {
+    display: flex;
+    gap: 28px;
+    padding: 32px;
+    align-items: flex-start;
+    margin-bottom: 32px;
+  }
+  .profile-panel__avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-panel);
+    border: 3px solid var(--line);
+    box-shadow: 5px 5px 0 0 var(--shadow);
+    padding: 14px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+  .profile-panel__frame {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .profile-panel__info {
+    flex: 1;
+    min-width: 0;
+  }
+  .profile-panel__name {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.3;
+  }
+  .profile-panel__role {
+    margin: 8px 0 0;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .profile-panel__bio {
+    margin: 14px 0 0;
+    color: var(--text-soft);
+    line-height: 1.85;
+  }
+  .profile-panel__stats {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .profile-panel__stats .px-chip {
+    font-size: 12px;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .profile-item {
+    padding: 20px;
+  }
+  .profile-item__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 17px;
+  }
+  .profile-item__title svg {
+    color: var(--accent);
+  }
+  .profile-item p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.8;
+    font-size: 14.5px;
+  }
+  .profile-item__done .profile-item__actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 767px) {
+    .profile-panel {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 22px;
+    }
+    .profile-panel__stats {
+      justify-content: center;
+    }
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+    .page {
+      padding-top: 32px;
+    }
+  }
+</style>
