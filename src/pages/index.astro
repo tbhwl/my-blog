@@ -42,7 +42,13 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
       <div class="hero__decor" aria-hidden="true">
         <span class="hero-decor__sky">
           <span class="hero-sun"><PixelIcon name="sun" size={96} /></span>
-          <span class="hero-moon"><PixelIcon name="moon" size={96} /></span>
+          <svg class="hero-moon" width="96" height="96" viewBox="0 0 24 24" aria-hidden="true" shape-rendering="crispEdges">
+            <mask id="hero-moon-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+              <rect width="24" height="24" fill="white" />
+              <circle cx="16" cy="7" r="9" fill="black" />
+            </mask>
+            <circle cx="11" cy="13" r="9" fill="#e8eeff" mask="url(#hero-moon-cutout)" />
+          </svg>
           <span class="hero-star hero-star--1"></span>
           <span class="hero-star hero-star--2"></span>
           <span class="hero-star hero-star--3"></span>
@@ -323,10 +329,17 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     filter: drop-shadow(4px 4px 0 var(--shadow));
     display: none;
   }
-  [data-theme="night"] .hero-sun {
+  :global([data-theme="day"]) .hero-sun {
+    display: block;
+  }
+  :global([data-theme="day"]) .hero-moon,
+  :global([data-theme="day"]) .hero-star {
     display: none;
   }
-  [data-theme="night"] .hero-moon {
+  :global([data-theme="night"]) .hero-sun {
+    display: none;
+  }
+  :global([data-theme="night"]) .hero-moon {
     display: block;
   }
   .hero-star {
@@ -337,7 +350,7 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     background: #e8eeff;
     box-shadow: 6px 0 #e8eeff, -6px 0 #e8eeff, 0 6px #e8eeff, 0 -6px #e8eeff;
   }
-  [data-theme="night"] .hero-star {
+  :global([data-theme="night"]) .hero-star {
     display: block;
   }
   .hero-star--1 { top: 76px; right: 18%; }
@@ -377,7 +390,7 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     transform: scale(0.7);
     opacity: 0.7;
   }
-  [data-theme="night"] .hero-cloud {
+  :global([data-theme="night"]) .hero-cloud {
     opacity: 0.32;
     transform: scale(0.72);
   }
@@ -642,7 +655,7 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
       top: 24px;
       right: 6%;
     }
-    [data-theme="night"] .hero-cloud--2 {
+    :global([data-theme="night"]) .hero-cloud--2 {
       top: 260px;
     }
     .adventurer {
@@ -652,6 +665,13 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     }
     .adventurer__stats {
       justify-content: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-sun,
+    .hero-cloud,
+    .hero-ore {
+      animation: none !important;
     }
   }
 </style>
