@@ -368,6 +368,10 @@ img.pixel-art {
    主题切换按钮
    ============================================================ */
 
+::view-transition {
+  pointer-events: none;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

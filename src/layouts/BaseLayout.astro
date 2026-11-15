@@ -56,5 +56,140 @@ const ogImageUrl = new URL(ogImage, siteConfig.url);
     <Hotbar />
     <slot />
     <Footer />
+    <script>
+      let preferredTheme: 'day' | 'night' | null = null;
+      let subtitleInterval: number | undefined;
+      let subtitleFallback: number | undefined;
+      const subtitleStates = new WeakMap<HTMLElement, { list: string[]; index: number }>();
+
+      function readSavedTheme(): 'day' | 'night' | null {
+        try {
+          const saved = localStorage.getItem('theme');
+          return saved === 'day' || saved === 'night' ? saved : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function selectedTheme(): 'day' | 'night' {
+        return readSavedTheme() ?? preferredTheme ??
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day');
+      }
+
+      function applyTheme(theme: 'day' | 'night', save = false, target: Document = document) {
+        const root = target.documentElement;
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme === 'night' ? 'dark' : 'light';
+        const meta = target.querySelector('meta[name="theme-color"]');
+        meta?.setAttribute('content', theme === 'night' ? '#0b1026' : '#8fd3ff');
+        if (save) {
+          preferredTheme = theme;
+          try {
+            localStorage.setItem('theme', theme);
+          } catch {
+            /* 隐私模式下忽略；当前页面仍立即切换 */
+          }
+        }
+      }
+
+      function initPage() {
+        const theme = selectedTheme();
+        applyTheme(theme);
+        const toggle = document.getElementById('theme-toggle');
+        toggle?.setAttribute('aria-label', theme === 'night' ? '切换到白天' : '切换到夜晚');
+        if (toggle) toggle.title = theme === 'night' ? '切换到白天' : '切换到夜晚';
+
+        document.querySelectorAll<HTMLAnchorElement>('.hotbar__slot').forEach((link) => {
+          const path = new URL(link.href, location.href).pathname;
+          const normalized = path.endsWith('/') ? path : `${path}/`;
+          const current = location.pathname.endsWith('/') ? location.pathname : `${location.pathname}/`;
+          const active = normalized === '/' ? current === '/' : current.startsWith(normalized);
+          if (active) link.setAttribute('aria-current', 'page');
+          else link.removeAttribute('aria-current');
+        });
+
+        if (subtitleInterval !== undefined) window.clearInterval(subtitleInterval);
+        if (subtitleFallback !== undefined) window.clearTimeout(subtitleFallback);
+        subtitleInterval = undefined;
+        subtitleFallback = undefined;
+
+        const subtitle = document.getElementById('hero-subtitle');
+        if (subtitle) {
+          const fallback = '把每一次踩坑都写成冒险日志。';
+          subtitleFallback = window.setTimeout(() => {
+            if (subtitle.textContent?.trim() === '正在生成世界……') subtitle.textContent = fallback;
+          }, 1500);
+          try {
+            const parsed: unknown = JSON.parse(subtitle.dataset.subtitles ?? '[]');
+            const phrases = Array.isArray(parsed)
+              ? parsed.filter((item): item is string => typeof item === 'string' && item !== '正在生成世界……')
+              : [];
+            const list = phrases.length ? phrases : [fallback];
+            const state = { list, index: Math.floor(Math.random() * list.length) };
+            const show = (animate: boolean) => {
+              subtitle.textContent = state.list[state.index];
+              if (animate) {
+                subtitle.classList.remove('is-flip');
+                void subtitle.offsetWidth;
+                subtitle.classList.add('is-flip');
+              }
+            };
+            subtitleStates.set(subtitle, state);
+            show(false);
+            window.clearTimeout(subtitleFallback);
+            subtitleFallback = undefined;
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && list.length > 1) {
+              subtitleInterval = window.setInterval(() => {
+                state.index = (state.index + 1) % state.list.length;
+                show(true);
+              }, 6000);
+            }
+          } catch {
+            // watchdog 会在 1.5 秒后替换占位文案
+          }
+        }
+      }
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const button = target.closest<HTMLButtonElement>('#theme-toggle');
+        if (!button) return;
+        const next = selectedTheme() === 'night' ? 'day' : 'night';
+        applyTheme(next, true);
+        button.setAttribute('aria-label', next === 'night' ? '切换到白天' : '切换到夜晚');
+        button.title = next === 'night' ? '切换到白天' : '切换到夜晚';
+        button.classList.remove('is-switching');
+        void button.offsetWidth;
+        button.classList.add('is-switching');
+      });
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const subtitle = target.closest<HTMLElement>('#hero-subtitle');
+        const state = subtitle ? subtitleStates.get(subtitle) : undefined;
+        if (!subtitle || !state) return;
+        state.index = (state.index + 1) % state.list.length;
+        subtitle.textContent = state.list[state.index];
+        subtitle.classList.remove('is-flip');
+        void subtitle.offsetWidth;
+        subtitle.classList.add('is-flip');
+      });
+
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+      systemTheme.addEventListener('change', (event) => {
+        if (readSavedTheme() === null && preferredTheme === null) applyTheme(event.matches ? 'night' : 'day');
+      });
+
+      document.addEventListener('astro:before-swap', (event) => {
+        const nextDocument = (event as Event & { newDocument?: Document }).newDocument;
+        if (nextDocument) applyTheme(selectedTheme(), false, nextDocument);
+      });
+      document.addEventListener('astro:after-swap', () => applyTheme(selectedTheme()));
+      document.addEventListener('astro:page-load', initPage);
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPage, { once: true });
+      else initPage();
+    </script>
   </body>
 </html>

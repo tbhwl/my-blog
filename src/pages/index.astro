@@ -43,6 +43,9 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
         <span class="hero-decor__sky">
           <span class="hero-sun"><PixelIcon name="sun" size={96} /></span>
           <span class="hero-moon"><PixelIcon name="moon" size={96} /></span>
+          <span class="hero-star hero-star--1"></span>
+          <span class="hero-star hero-star--2"></span>
+          <span class="hero-star hero-star--3"></span>
         </span>
         <span class="hero-cloud hero-cloud--1"></span>
         <span class="hero-cloud hero-cloud--2"></span>
@@ -231,48 +234,6 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
   </main>
 </BaseLayout>
 
-<script>
-  // 随机像素副标题：加载时随机一条，之后定时轮换；点击可手动换一条。
-  const el = document.getElementById('hero-subtitle');
-  if (el) {
-    let list: string[] = [];
-    try {
-      list = JSON.parse(el.dataset.subtitles ?? '[]');
-    } catch {
-      /* 忽略 */
-    }
-    if (list.length === 0) list = ['正在生成世界……'];
-
-    let index = Math.floor(Math.random() * list.length);
-
-    const show = (i: number, animate: boolean) => {
-      el.textContent = list[i % list.length];
-      if (animate) {
-        el.classList.remove('is-flip');
-        void el.offsetWidth;
-        el.classList.add('is-flip');
-      }
-    };
-
-    show(index, false);
-
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let timer: number | undefined;
-    if (!reduced) {
-      timer = window.setInterval(() => {
-        index = (index + 1) % list.length;
-        show(index, true);
-      }, 6000);
-    }
-
-    el.addEventListener('click', () => {
-      if (timer) window.clearInterval(timer);
-      index = (index + 1) % list.length;
-      show(index, true);
-    });
-  }
-</script>
-
 <style>
   /* ---- Hero ---- */
   .hero {
@@ -368,6 +329,20 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
   [data-theme="night"] .hero-moon {
     display: block;
   }
+  .hero-star {
+    display: none;
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #e8eeff;
+    box-shadow: 6px 0 #e8eeff, -6px 0 #e8eeff, 0 6px #e8eeff, 0 -6px #e8eeff;
+  }
+  [data-theme="night"] .hero-star {
+    display: block;
+  }
+  .hero-star--1 { top: 76px; right: 18%; }
+  .hero-star--2 { top: 144px; right: 6%; transform: scale(.65); }
+  .hero-star--3 { top: 54px; right: 5%; transform: scale(.5); }
   @keyframes sun-bob {
     0%, 100% {
       transform: translateY(0);
@@ -401,6 +376,10 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     animation-delay: -12s;
     transform: scale(0.7);
     opacity: 0.7;
+  }
+  [data-theme="night"] .hero-cloud {
+    opacity: 0.32;
+    transform: scale(0.72);
   }
   @keyframes cloud-drift {
     0% {
@@ -662,6 +641,9 @@ const subtitlesJson = JSON.stringify(heroSubtitles);
     .hero-moon {
       top: 24px;
       right: 6%;
+    }
+    [data-theme="night"] .hero-cloud--2 {
+      top: 260px;
     }
     .adventurer {
       flex-direction: column;
